@@ -23,7 +23,7 @@ header = header{1};
 % fill it in
 for e = 1:length(c{1})
     for f = 1:length(header)
-        if any(strcmp(header{f},{'mstime','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','recFromNearSide','isSerial','reactionTime','rememberBool'}));
+        if any(strcmp(header{f},{'mstime','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isRecFromNearSide','isSerial','reactionTime','rememberBool','isHighConf'}));
             events(e).(header{f}) = str2double(c{f}{e});
         elseif strcmp(c{f}{e},'None')            
             events(e).(header{f}) = '';

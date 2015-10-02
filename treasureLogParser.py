@@ -3,7 +3,7 @@ import os.path
 import pprint
 
 def writeToFile(f,data):
-    columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','confidence','recFromNearSide','isSerial','reactionTime','rememberBool'];
+    columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
     strToWrite = ''
     for col in columnOrder:
         # if isinstance(data[col],list):
@@ -17,9 +17,9 @@ def writeToFile(f,data):
     f.write(strToWrite)
 
 
-def makeEmptyDict(mstime=None,eventType=None,item=None,trial=None,chestNum=None,locationX=None,locationY=None,chosenLocationX=None,chosenLocationY=None,recStartLocationX=None,recStartLocationY=None,confidence=None,recFromNearSide=None,isSerial=None,reactionTime=None,rememberBool=None):
-    fields = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','confidence','recFromNearSide','isSerial','reactionTime','rememberBool'];
-    vals = [mstime,eventType,item,trial,chestNum,locationX,locationY,chosenLocationX,chosenLocationY,recStartLocationX,recStartLocationY,confidence,recFromNearSide,isSerial,reactionTime,rememberBool]
+def makeEmptyDict(mstime=None,eventType=None,item=None,trial=None,chestNum=None,locationX=None,locationY=None,chosenLocationX=None,chosenLocationY=None,recStartLocationX=None,recStartLocationY=None,isHighConf=None,isRecFromNearSide=None,isSerial=None,reactionTime=None,rememberBool=None):
+    fields = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
+    vals = [mstime,eventType,item,trial,chestNum,locationX,locationY,chosenLocationX,chosenLocationY,recStartLocationX,recStartLocationY,isHighConf,isRecFromNearSide,isSerial,reactionTime,rememberBool]
     emptyDict = dict(zip(fields,vals))
     # emptyDict = dict((f, []) for f in fields)
     # emptyDict['mstime'] = mstime
@@ -43,7 +43,7 @@ if logFile == '':
 
 inFile = open(os.path.join(dir,logFile), 'r')
 outFile = open(os.path.join(dir,"treasure.par"), 'w')
-columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','confidence','recFromNearSide','isSerial','reactionTime','rememberBool'];
+columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
 outFile.write('\t'.join(columnOrder) + '\n')
 
 # Needed fields
@@ -55,7 +55,7 @@ outFile.write('\t'.join(columnOrder) + '\n')
 # location: vector double ([x,y])
 # chosenLocation: vector double ([x,y])
 # recStartLocation: vector double ([x,y])
-# recFromNearSide: bool
+# isRecFromNearSide: bool
 # isSerial: bool
 # reactionTime: from when the cue comes on?
 
@@ -141,8 +141,8 @@ for s in inFile.readlines():
                 y = None
                 presX = None
                 presY = None
-                confidence = 'low'
-                recFromNear = None
+                isHighConf = 'low'
+                isRecFromNearSide = None
                 recStartTime = tokens[0]
                 reactionTime = None
                 
@@ -156,12 +156,12 @@ for s in inFile.readlines():
                     
             elif tokens[2] == 'Experiment' and tokens[3] == 'DOUBLE_DOWN_RESPONSE':   
                 print tokens[4]  
-                confidence = 'low'
+                isHighConf = 0
                 if tokens[4] == 'True':
-                    confidence = 'high'                  
+                    isHighConf = 1
                 key = getPresDictKey(data,recItem,trialNum)          
-                data[mstime]['confidence'] = confidence
-                data[key]['confidence'] = confidence                                    
+                data[mstime]['isHighConf'] = isHighConf
+                data[key]['isHighConf'] = isHighConf                                    
                                     
             elif tokens[2] == 'EnvironmentPositionSelector' and tokens[3] == 'CHOSEN_TEST_POSITION':
                 x = tokens[4]
@@ -186,12 +186,12 @@ for s in inFile.readlines():
                 data[mstime]['chestNum'] = data[key]['chestNum']
 
                 
-                recFromNear = 0
+                isRecFromNearSide = 0
                 if ((presY >= env_center[1] and data[key]['recStartLocationY'] >= env_center[1]) or
                     (presY < env_center[1] and data[key]['recStartLocationY'] < env_center[1])):
-                    recFromNear = 1
-                data[key]['recFromNearSide'] = recFromNear
-                data[mstime]['recFromNearSide'] = recFromNear
+                    isRecFromNearSide = 1
+                data[key]['isRecFromNearSide'] = isRecFromNearSide
+                data[mstime]['isRecFromNearSide'] = isRecFromNearSide
                         
                                                 
                     
@@ -201,7 +201,7 @@ for key in sortedKeys:
     writeToFile(outFile,data[key])
                 # pprint.pprint(makeEmptyDict(mstime,'REC',recItem,trialNum,'NaN',[presX,presY],[x,y]))
                 # pp.pprint(makeEmptyDict(mstime,'REC',recItem,trialNum,'NaN',[presX,presY],[x,y],[playerPosition[0],playerPosition[2]]) )
-                # print 'TRIAL %s REC POS %s ITEM %s CONFIDENCE %s' %(trialNum,recPos,recItem,confidence)
+                # print 'TRIAL %s REC POS %s ITEM %s isHighConf %s' %(trialNum,recPos,recItem,isHighConf)
 
 
 
@@ -290,4 +290,4 @@ for key in sortedKeys:
 #
 #
 inFile.close()
-# outFile.close()
+outFile.close()
