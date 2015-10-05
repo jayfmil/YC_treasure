@@ -28,6 +28,7 @@ for i = 1:2
     ylabel(ylabels{i},'fontsize',16)
     xlabel('List Length','fontsize',16)
     set(gca,'fontsize',16)
+    set(gca,'xticklabel',unique(listLengths))
     grid on
     hold on
     errorbar(1:length(plotData{i}),plotData{i},plotDataStd{i}./sqrt(ns{i}-1),'k','linewidth',2,'linestyle','none')
@@ -49,6 +50,7 @@ for i = 1:2
     bar(plotData{i},'w','linewidth',2)
     ylabel(ylabels{i},'fontsize',16)
     xlabel('Confidence','fontsize',16)
+    set(gca,'xticklabel',{'Low','High'})
     set(gca,'fontsize',16)
     grid on
     hold on
@@ -71,6 +73,7 @@ for i = 1:2
     bar(plotData{i},'w','linewidth',2)
     ylabel(ylabels{i},'fontsize',16)
     xlabel('Near/Far Target','fontsize',16)
+    set(gca,'xticklabel',{'Near','Far'})
     set(gca,'fontsize',16)
     grid on
     hold on
