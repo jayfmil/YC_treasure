@@ -88,14 +88,6 @@ grid on
 keyboard
 
 
-% TIME OF TASK
-
-
-
-
-
-
-
 
 
 
