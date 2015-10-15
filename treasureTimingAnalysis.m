@@ -58,10 +58,12 @@ y = [y;mean(y)];
 
 % plot the bars and make them look nice
 clf
-h=bar([1:size(y,1)-1 size(y,1)+1],y,'stacked');
+x = [1:size(y,1)-1 size(y,1)+1];
+h=bar(x,y,'stacked');
 h(1).FaceColor = [0 67 88]/255;
 h(2).FaceColor = [31 138 112]/255;
 h(3).FaceColor = [190 219 57]/255;
+set(gca,'xtick',x);
 
 % label by the number of objects per trial
 objsForEachTrial = grpstats(objInds,trials,{'sum'});
@@ -74,7 +76,7 @@ set(gca,'xticklabel',objsForEachTrial);
 set(gca,'xlim',[0 xtick(end)+1])
 ylabel('Time (s)')
 xlabel('# Objects/Trial')
-set(gca,'fontsize',20)
+set(gca,'fontsize',18)
 hold on
 ylim = f.YLim;
 plot([xtick(end)-1 xtick(end)-1],ylim,'--k','linewidth',3)
@@ -84,7 +86,7 @@ h2.Location = 'EastOutside';
 % title with the time per objects
 titleStr = sprintf('%.3f s/object',totalTime/sum(objInds)/1000);
 title(titleStr);
-keyboard
+
 
 
 
