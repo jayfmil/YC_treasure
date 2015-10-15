@@ -16,7 +16,7 @@ Y = 69.928;
 [allErrors,~,allEucErrors,~] = YC1_loadAllSubjErrors(1);
 
 % find mean error near given percentile
-normErr = prctile(allErr,yc1ErrPerc);
+normErr = prctile(allErrors,yc1ErrPerc);
 yc1EucErr = mean(allEucErrors(allErrors > (normErr - .01) & allErrors < (normErr + .01)));
 
 % convert YC1 euclidean error to new task error. Luckily it is the same
