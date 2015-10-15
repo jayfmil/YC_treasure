@@ -90,6 +90,8 @@ ylabel('Count','fontsize',16);
 set(gca,'fontsize',16)
 grid on
 
+
+%%%% PERCENT CORRECT AS A FUNCTION OF DISTANCE THRESHOLD
 figure(5)
 clf
 possDists = linspace(0,100,250);
@@ -103,19 +105,23 @@ grid on
 set(gca,'gridlinestyle',':');
 
 hold on
-x = possDists(sum(possDists < 12.5));
-y = pCorr(sum(possDists < 12.5));
-plot([x x],[0 y],'-k','linewidth',3);
-plot([0 x],[y y],'-k','linewidth',3);
+x1 = possDists(sum(possDists < 12.5));
+y1 = pCorr(sum(possDists < 12.5));
+plot([x1 x1],[0 y1],'-k','linewidth',3);
+plot([0 x1],[y1 y1],'-k','linewidth',3);
 
 half = sum(pCorr <= 50);
-x = possDists(half);
-y = pCorr(half);
-plot([x x],[0 y],':k','linewidth',3);
-plot([0 x],[y y],':k','linewidth',3);
+x2 = possDists(half);
+y2 = pCorr(half);
+plot([x2 x2],[0 y2],':k','linewidth',3);
+plot([0 x2],[y2 y2],':k','linewidth',3);
 
 xlabel('Correct threshold','fontsize',24)
 ylabel('Percent within circle','fontsize',24)
+
+titleStr = sprintf('%.2f%% at 12.5, 50%% at %.2f',y1,x2);
+title(titleStr);
+set(gca,'TitleFontWeight','normal')
 set(gca,'fontsize',24)
 
 
