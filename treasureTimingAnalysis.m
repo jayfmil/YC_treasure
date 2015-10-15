@@ -20,6 +20,7 @@ feedStartInd  = strcmp(c{3},'feedback_start');
 homeStartInd  = strcmp(c{3},'homebase_transport');
 instStartInd  = strcmp(c{3},'instructions');
 objInds       = strcmp(c{3},'object');
+chestInds       = strcmp(c{3},'chest');
 
 % timestamps and trials
 mstimes = cellfun(@str2num,(c{1}));
