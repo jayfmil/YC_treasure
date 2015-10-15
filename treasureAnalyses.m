@@ -82,13 +82,72 @@ end
 
 %%%% DISTANCE ERROR HISTOGRAM
 figure(4)
+clf
 [n,x] = hist(distErrs);
 bar(x,n,1,'w','linewidth',2);
 xlabel('Distance Error','fontsize',16);
 ylabel('Count','fontsize',16);
 set(gca,'fontsize',16)
 grid on
+
+figure(5)
+clf
+possDists = linspace(0,100,250);
+pCorr = NaN(1,length(possDists));
+for i = 1:length(possDists)
+    pCorr(i) = mean(distErrs < possDists(i));
+end
+pCorr = pCorr*100;
+plot(possDists,pCorr,'linewidth',3)
+grid on
+set(gca,'gridlinestyle',':');
+
+hold on
+x = possDists(sum(possDists < 12.5));
+y = pCorr(sum(possDists < 12.5));
+plot([x x],[0 y],'-k','linewidth',3);
+plot([0 x],[y y],'-k','linewidth',3);
+
+half = sum(pCorr <= 50);
+x = possDists(half);
+y = pCorr(half);
+plot([x x],[0 y],':k','linewidth',3);
+plot([0 x],[y y],':k','linewidth',3);
+
+xlabel('Correct threshold','fontsize',24)
+ylabel('Percent within circle','fontsize',24)
+set(gca,'fontsize',24)
 keyboard
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
