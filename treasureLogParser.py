@@ -122,6 +122,17 @@ for s in inFile.readlines():
                 recStartTime = tokens[0]
                 reactionTime = None
                 
+                key = getPresDictKey(data,recItem,trialNum)
+                data[key]['recStartLocationX'] = playerPosition[0]
+                data[key]['recStartLocationY'] = playerPosition[2]        
+                # determine if the target location is the same half of the environment
+                # as the player test location
+                isRecFromNearSide = 0
+                if ((presY >= env_center[1] and data[key]['recStartLocationY'] >= env_center[1]) or
+                    (presY < env_center[1] and data[key]['recStartLocationY'] < env_center[1])):
+                    isRecFromNearSide = 1
+                data[key]['isRecFromNearSide'] = isRecFromNearSide                        
+                
             elif tokens[2] == recItem and tokens[3] == 'SPAWNED':
                 mstime = tokens[0]                
                 
@@ -129,6 +140,8 @@ for s in inFile.readlines():
                 rememberBool = 0
                 if tokens[4]=='True':
                     rememberBool = 1
+                key = getPresDictKey(data,recItem,trialNum)          
+                data[key]['rememberBool'] = rememberBool                      
                     
             elif tokens[2] == 'Experiment' and tokens[3] == 'DOUBLE_DOWN_RESPONSE':   
                 print tokens[4]  
@@ -155,19 +168,9 @@ for s in inFile.readlines():
                 key = getPresDictKey(data,recItem,trialNum)
                 data[key]['chosenLocationX'] = x
                 data[key]['chosenLocationY'] = y                        
-                data[key]['recStartLocationX'] = playerPosition[0]
-                data[key]['recStartLocationY'] = playerPosition[2]
                 data[key]['reactionTime'] = reactionTime                       
                 data[key]['rememberBool'] = rememberBool                                               
-                data[mstime]['chestNum'] = data[key]['chestNum']                
-                
-                # determine if the target location is the same half of the environment
-                # as the player test location
-                isRecFromNearSide = 0
-                if ((presY >= env_center[1] and data[key]['recStartLocationY'] >= env_center[1]) or
-                    (presY < env_center[1] and data[key]['recStartLocationY'] < env_center[1])):
-                    isRecFromNearSide = 1
-                data[key]['isRecFromNearSide'] = isRecFromNearSide
+                data[mstime]['chestNum'] = data[key]['chestNum']                                
                 data[mstime]['isRecFromNearSide'] = isRecFromNearSide
                         
                                                 
