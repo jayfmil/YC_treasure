@@ -4,6 +4,9 @@ function treasureAnalyses_group(resDir,saveDir)
 % Creates group average report. Code could use cleanup.
 
 % location to save average data
+if ~exist(saveDir,'var') || isempty(saveDir)
+    saveDir = resDir;
+end
 if ~exist(saveDir,'dir')
     mkdir(saveDir);
 end
