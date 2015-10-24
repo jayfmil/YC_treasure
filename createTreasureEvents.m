@@ -1,22 +1,27 @@
-function events = createTreasureEvents(parfile)
+function events = createTreasureEvents(parfile,saveDir)
 % function events = createTreasureEvents(parfile)
 %
 % Create events struture for the treasure game.
 %
 % Input: path to parfile created with parser.py
+%        path to directory to save events file
+
+if ~exist(saveDir,'dir')
+    mkdir(saveDir);
+end
 
 % open parfile
 fid = fopen(parfile,'r');
 
 % head has the field names
-header = textscan(fid,'%s',16);
+header = textscan(fid,'%s',17);
 
 % read in the rest and close
-c = textscan(fid,'%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s','delimiter','\t');
+c = textscan(fid,'%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s','delimiter','\t');
 fclose(fid);
 
 % create empty structure
-events = cell2struct(cell(16,1),header{:});
+events = cell2struct(cell(17,1),header{:});
 events(length(c{1})).mstime = [];
 header = header{1};
 
@@ -66,6 +71,9 @@ for t = uniqTrials
    end
 end
 
+% save to file
+fname = fullfile(saveDir,[events(1).subj '_events.mat']);
+save(fname,'events');
 
 
 

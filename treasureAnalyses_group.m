@@ -1,11 +1,7 @@
-function treasureAnalyses(events,saveDir)
+function treasureAnalyses_group(resDir,saveDir)
+% function treasureAnalyses_group(resDir,saveDir)
 %
-% What analyses do we want to do?
-
-% DISTANCE ERROR X CONDITION
-% Condition categories: List length
-%                       Confidence
-%                       Target location (near/far)
+% Creates group average report. Code could use cleanup.
 
 % location to save average data
 if ~exist(saveDir,'dir')
@@ -16,30 +12,47 @@ if ~exist(figDir,'dir')
     mkdir(figDir);
 end
 
-% structure to hold average data
-subj = events(1).subj;
-res  = [];
+% list of files to load and concat
+subjFiles = dir(fullfile(resDir,['*res.mat']));
 
-% recall events, used for most analyses
-itemRecEvents = strcmp({events.type},'REC');
+% This loop loads the data from each subject and concatenates all subjects
+% in to one large structure
+subjDataAll =  [];
+for s = 1:length(subjFiles)                
+    
+    subjFile = subjFiles(s).name;
+    subjFile = fullfile(resDir,subjFile);
+     
+    % load subject datasav
+    subjData = load(subjFile);
+    
+    % if we haven't done it yet, initialze structure to hold concatenated
+    % data from all subjects
+    if isempty(subjDataAll)
+       fields = fieldnames(subjData.res);
+       for f = fields'
+           subjDataAll.(f{1}) = [];
+           if isstruct(subjData.res.(f{1}))               
+               subfields = fieldnames(subjData.res.(f{1}));
+               for subf = subfields'
+                   subjDataAll.(f{1}).(subf{1}) = [];
+               end
+           end
+       end
+    end    
+    
+    % merge current subject data into larger struct
+    subjDataAll = mergestruct(subjDataAll,subjData.res);  
+end
+subj = 'all';
 
 %%%% PERFORMANCE BY LIST LENGTH
-listLengths = [events(itemRecEvents).listLength];
-distErrs    = [events(itemRecEvents).distErr];
-res.distErrs = distErrs';
-reactTimes  = [events(itemRecEvents).reactionTime];
-res.reactTimes = reactTimes';
-[errMeanListLength,errStdListLength,nMeanDistLength] = grpstats(distErrs',listLengths',{'mean','std','numel'});
-[reactMeanListLength,reactStdListLength,nMeanReactLength] = grpstats((reactTimes')/1000,listLengths',{'mean','std','numel'});
-res.errMeanListLength = errMeanListLength';
-res.reactMeanListLength = reactMeanListLength';
-
 figs = [];
 figure(1)
 clf
-plotData    = {errMeanListLength,reactMeanListLength};
-plotDataStd = {errStdListLength,reactStdListLength};
-ns          = {nMeanDistLength,nMeanReactLength};
+plotData    = cellfun(@mean,{subjDataAll.errMeanListLength,subjDataAll.reactMeanListLength},'uniformoutput',false);
+plotDataStd = cellfun(@std,{subjDataAll.errMeanListLength,subjDataAll.reactMeanListLength},'uniformoutput',false);
+ns          = cellfun(@length,{subjDataAll.errMeanListLength,subjDataAll.reactMeanListLength},'uniformoutput',false);
 ylabels     = {'Distance Error (VR Units)','Reaction Time (s)'};
 for i = 1:2
     subplot(1,2,i)
@@ -47,7 +60,7 @@ for i = 1:2
     ylabel(ylabels{i},'fontsize',16)
     xlabel('List Length','fontsize',16)
     set(gca,'fontsize',16)
-    set(gca,'xticklabel',unique(listLengths))
+    set(gca,'xticklabel',1:3)
     grid on
     hold on
     errorbar(1:length(plotData{i}),plotData{i},plotDataStd{i}./sqrt(ns{i}-1),'k','linewidth',2,'linestyle','none')
@@ -57,32 +70,12 @@ figs.listLength = fname;
 print('-depsc2','-loose',[fname '.eps'])
 
 %%%% PERFORMANCE BY CONFIDENCE
-confs = [events(itemRecEvents).isHighConf];
-[errMeanConf,errStdConf,nMeanDistConf] = grpstats(distErrs',confs',{'mean','std','numel'});
-[reactMeanConf,reactStdConf,nMeanReactConf] = grpstats((reactTimes')/1000,confs',{'mean','std','numel'});
-
-% catch instances where only one confidence level is used
-missing = ~ismember([0 1],confs);
-if ~all(missing)
-    
-    [errMeanConfTmp,errStdConfTmp,nMeanDistConfTmp]      = deal(NaN(2,1));
-    [reactMeanConfTmp,reactStdConfTmp,nMeanReactConfTmp] = deal(NaN(2,1));
-    errMeanConfTmp(~missing)   = errMeanConf;errMeanConf=errMeanConfTmp;
-    errStdConfTmp(~missing)    = errStdConf;errStdConf=errStdConfTmp;
-    nMeanDistConfTmp(~missing) = nMeanDistConf;nMeanDistConf=nMeanDistConfTmp;
-    
-    reactMeanConfTmp(~missing)   = reactMeanConf;reactMeanConf=reactMeanConfTmp;
-    reactStdConfTmp(~missing)    = reactStdConf;reactStdConf=reactStdConfTmp;
-    nMeanReactConfTmp(~missing) = nMeanReactConf;nMeanReactConf=nMeanReactConfTmp;
-end
-res.errMeanConf = errMeanConf';
-res.reactMeanConf = reactMeanConf';
-
 figure(2)
 clf
-plotData    = {errMeanConf,reactMeanConf};
-plotDataStd = {errStdConf,reactStdConf};
-ns          = {nMeanDistConf,nMeanReactConf};
+plotData    = cellfun(@nanmean,{subjDataAll.errMeanConf,subjDataAll.reactMeanConf},'uniformoutput',false);
+plotDataStd = cellfun(@nanstd,{subjDataAll.errMeanConf,subjDataAll.reactMeanConf},'uniformoutput',false);
+f = @(x)sum(~isnan(x));
+ns          = cellfun(f,{subjDataAll.errMeanConf,subjDataAll.reactMeanConf},'uniformoutput',false);
 ylabels     = {'Distance Error (VR Units)','Reaction Time (s)'};
 for i = 1:2
     subplot(1,2,i)
@@ -100,17 +93,12 @@ figs.conf = fname;
 print('-depsc2','-loose',[fname '.eps'])
 
 %%%% PERFORMANCE BY TARGET LOCATION (NEAR/FAR)
-nearFar = ~[events(itemRecEvents).isRecFromNearSide];
-[errMeanTargLoc,errStdDistLoc,nMeanDistTargLoc] = grpstats(distErrs',nearFar',{'mean','std','numel'});
-[reactMeanTargLoc,reactStdTargLoc,nMeanReactTargLoc] = grpstats((reactTimes')/1000,nearFar',{'mean','std','numel'});
-res.errMeanTargLoc = errMeanTargLoc';
-res.reactMeanTargLoc = reactMeanTargLoc';
-
 figure(3)
 clf
-plotData    = {errMeanTargLoc,reactMeanTargLoc};
-plotDataStd = {errStdDistLoc,reactStdTargLoc};
-ns          = {nMeanDistTargLoc,nMeanReactTargLoc};
+plotData    = cellfun(@nanmean,{subjDataAll.errMeanTargLoc,subjDataAll.reactMeanTargLoc},'uniformoutput',false);
+plotDataStd = cellfun(@nanstd,{subjDataAll.errMeanTargLoc,subjDataAll.reactMeanTargLoc},'uniformoutput',false);
+f = @(x)sum(~isnan(x));
+ns          = cellfun(f,{subjDataAll.errMeanTargLoc,subjDataAll.reactMeanTargLoc},'uniformoutput',false);
 ylabels     = {'Distance Error (VR Units)','Reaction Time (s)'};
 for i = 1:2
     subplot(1,2,i)
@@ -128,28 +116,13 @@ figs.nearFar = fname;
 print('-depsc2','-loose',[fname '.eps'])
 
 %%% SERIAL POSITION CURVE BY LISTLENGTH
-itemPresEvents = strcmp({events.type},'CHEST') & ~isnan([events.rememberBool]);
-presListLength = [events(itemPresEvents).listLength];
-presSerPos     = [events(itemPresEvents).chestNum];
-distErrsPres   = [events(itemPresEvents).distErr];
-rememberBool   = [events(itemPresEvents).rememberBool] ;
-uniqListLen    = unique(presListLength);
-
-errMat    = NaN(length(uniqListLen),max([events.chestNum]));
-errStdMat = NaN(length(uniqListLen),max([events.chestNum]));
-for i = 1:length(uniqListLen)
-    trials = presListLength == uniqListLen(i);
-    [err,errStd,n] = grpstats(distErrsPres(trials)',presSerPos(trials)',{'mean','std','numel'});
-    errMat(i,unique(presSerPos(trials))) = err;
-    errStdMat(i,unique(presSerPos(trials))) = errStd./sqrt(n-1);
-end
-res.errMat = errMat;
-
+errMat    = nanmean(subjDataAll.errMat,3);
+errStdMat = nanstd(subjDataAll.errMat,0,3);
 figure(4)
 clf
 axes('position',[.13 .4 .775 .5]);
 errorbar(repmat(1:size(errStdMat,2),size(errStdMat,1),1)',errMat',errStdMat','linewidth',3)
-h=legend(strcat(cellfun(@num2str,num2cell(uniqListLen),'uniformoutput',false),' item list'));
+h=legend(strcat(cellfun(@num2str,num2cell([1 2 3]),'uniformoutput',false),' item list'));
 set(h,'fontsize',20)
 xlabel('','fontsize',16);
 ylabel('Distance Error','fontsize',16);
@@ -159,8 +132,8 @@ set(gca,'fontsize',16)
 set(gca,'xtick',1:size(errMat,2))
 
 axes('position',[.13 .1 .775 .2])
-[meanRemember,errRemember,nRemember] = grpstats(rememberBool',presSerPos',{'mean','std','numel'});
-res.meanRemember = meanRemember';
+
+meanRemember = mean(subjDataAll.meanRemember);
 bar(meanRemember,'w','linewidth',3)
 set(gca,'xtick',1:size(errMat,2))
 xlabel('Serial Position','fontsize',16);
@@ -176,7 +149,7 @@ print('-depsc2','-loose',[fname '.eps'])
 %%%% DISTANCE ERROR HISTOGRAM
 figure(5)
 clf
-[n,x] = hist(distErrs);
+[n,x] = hist(subjDataAll.distErrs,25);
 bar(x,n,1,'w','linewidth',2);
 xlabel('Distance Error','fontsize',16);
 ylabel('Count','fontsize',16);
@@ -187,47 +160,44 @@ figs.distErr = fname;
 print('-depsc2','-loose',[fname '.eps'])
 
 %%%% PERCENT CORRECT AS A FUNCTION OF DISTANCE THRESHOLD
-figure(6)
-clf
-possDists = linspace(0,100,250);
-pCorr = NaN(1,length(possDists));
-for i = 1:length(possDists)
-    pCorr(i) = mean(distErrs < possDists(i));
-end
-pCorr = pCorr*100;
-plot(possDists,pCorr,'linewidth',3)
-grid on
-set(gca,'gridlinestyle',':');
-
-hold on
-x1 = possDists(sum(possDists < 12.5));
-y1 = pCorr(sum(possDists < 12.5));
-plot([x1 x1],[0 y1],'-k','linewidth',3);
-plot([0 x1],[y1 y1],'-k','linewidth',3);
-
-half = sum(pCorr <= 50);
-x2 = possDists(half);
-y2 = pCorr(half);
-plot([x2 x2],[0 y2],':k','linewidth',3);
-plot([0 x2],[y2 y2],':k','linewidth',3);
-
-xlabel('Correct threshold','fontsize',24)
-ylabel('Percent within circle','fontsize',24)
-
-titleStr = sprintf('%.2f%% at 12.5, 50%% at %.2f',y1,x2);
-title(titleStr);
-set(gca,'TitleFontWeight','normal')
-set(gca,'fontsize',24)
-
-fname = fullfile(figDir,[subj '_pCorr']);
-figs.pCorr = fname;
-print('-depsc2','-loose',[fname '.eps'])
-
-fname = fullfile(saveDir,[events(1).subj '_res.mat']);
-save(fname,'res')
+% figure(6)
+% clf
+% possDists = linspace(0,100,250);
+% pCorr = NaN(1,length(possDists));
+% for i = 1:length(possDists)
+%     pCorr(i) = mean(distErrs < possDists(i));
+% end
+% pCorr = pCorr*100;
+% plot(possDists,pCorr,'linewidth',3)
+% grid on
+% set(gca,'gridlinestyle',':');
+% 
+% hold on
+% x1 = possDists(sum(possDists < 12.5));
+% y1 = pCorr(sum(possDists < 12.5));
+% plot([x1 x1],[0 y1],'-k','linewidth',3);
+% plot([0 x1],[y1 y1],'-k','linewidth',3);
+% 
+% half = sum(pCorr <= 50);
+% x2 = possDists(half);
+% y2 = pCorr(half);
+% plot([x2 x2],[0 y2],':k','linewidth',3);
+% plot([0 x2],[y2 y2],':k','linewidth',3);
+% 
+% xlabel('Correct threshold','fontsize',24)
+% ylabel('Percent within circle','fontsize',24)
+% 
+% titleStr = sprintf('%.2f%% at 12.5, 50%% at %.2f',y1,x2);
+% title(titleStr);
+% set(gca,'TitleFontWeight','normal')
+% set(gca,'fontsize',24)
+% 
+% fname = fullfile(figDir,[subj '_pCorr']);
+% figs.pCorr = fname;
+% print('-depsc2','-loose',[fname '.eps'])
 
 %%%% make report
-texName = 'treasureReport.tex';
+texName = 'treasureReport_group.tex';
 write_texfile(saveDir,texName,figs)
 
 curr_dir = pwd;
@@ -278,7 +248,7 @@ fprintf(fid,'\\newcolumntype{C}[1]{>{\\centering\\let\\newline\\\\\\arraybacksla
 fprintf(fid,'\\usepackage{fancyhdr}\n');
 fprintf(fid,'\\pagestyle{fancy}\n');
 fprintf(fid,'\\fancyhf{}\n');
-% fprintf(fid,'\\lhead{Report: %s }\n',strrep(subj,'_','\_'));
+fprintf(fid,'\\lhead{All Subjects}\n');
 fprintf(fid,'\\rhead{Date created: %s}\n',date);
 
 fprintf(fid,'\\usepackage{hyperref}\n');
@@ -298,8 +268,8 @@ for s = 1:length(figs)
     fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).nearFar);
     fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).distErr);    
     fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).spc);        
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).pCorr);        
-    fprintf(fid,'\\caption{a: Performance as a factor of number of objects. b: Performance as a factor of confidence. c: Performance as a factor of item near/far from test side. d: distance error histogram. e: serial position curve. f: Percent correct by threshold.}\n');
+%     fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).pCorr);        
+    fprintf(fid,'\\caption{a: Performance as a factor of number of objects. b: Performance as a factor of confidence. c: Performance as a factor of item near/far from test side. d: distance error histogram. e: serial position curve.}\n');
     fprintf(fid,'\\end{figure}\n\n\n');
     if mod(s,2) == 0
         fprintf(fid,'\\clearpage\n\n\n');
@@ -318,6 +288,29 @@ fprintf(fid,'\\end{document}\n\n\n');
 
 
 
+function sout = mergestruct(struct1,struct2)
+
+if isempty(struct1) & ~isempty(struct2)
+    sout = struct2;
+    return
+elseif ~isempty(struct1) & isempty(struct2)
+    sout = struct1;
+    return
+end
+
+fields1 = fieldnames(struct1);
+fields2 = fieldnames(struct2);
+
+if isequal(fields1,fields2)
+    sout = cell2struct(fields1,fields1,1);
+    for f = 1:length(fields1)
+        if isrow(struct2.(fields1{f})) || isrow(struct2.(fields1{f})')
+            sout.(fields1{f}) = cat(1,struct1.(fields1{f}),struct2.(fields1{f}));       
+        else
+            sout.(fields1{f}) = cat(3,struct1.(fields1{f}),struct2.(fields1{f}));       
+        end
+    end
+end
 
 
 

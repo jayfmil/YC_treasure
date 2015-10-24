@@ -2,7 +2,7 @@ import sys
 import os.path
 import pprint
 
-def writeToFile(f,data):
+def writeToFile(f,data,subj):
     columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
     strToWrite = ''
     for col in columnOrder:
@@ -10,7 +10,7 @@ def writeToFile(f,data):
         if col != columnOrder[-1]:
             strToWrite += '%s\t'%(line)
         else:
-            strToWrite += '%s\n'%(line)    
+            strToWrite += '%s\t%s\n'%(line,subj)    
     f.write(strToWrite)
 
 
@@ -35,9 +35,10 @@ if logFile == '':
     logFile = 'log.txt'
 
 inFile = open(os.path.join(dir,logFile), 'r')
+subj = logFile[:-4]
 outFile = open(os.path.join(dir,"treasure.par"), 'w')
 columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
-outFile.write('\t'.join(columnOrder) + '\n')
+outFile.write('\t'.join(columnOrder) + '\tsubj\n')
 
 
 treasureInfo = {}
@@ -47,6 +48,8 @@ env_center = None
 pp = pprint.PrettyPrinter(indent=4)
 
 for s in inFile.readlines():
+
+    s = s.replace('\r','')
     tokens = s[:-1].split('\t')
     if len(tokens)>1:            
         
@@ -144,7 +147,7 @@ for s in inFile.readlines():
                 data[key]['rememberBool'] = rememberBool                      
                     
             elif tokens[2] == 'Experiment' and tokens[3] == 'DOUBLE_DOWN_RESPONSE':   
-                print tokens[4]  
+                # print tokens[4]  
                 isHighConf = 0
                 if tokens[4] == 'True':
                     isHighConf = 1
@@ -177,7 +180,7 @@ for s in inFile.readlines():
                     
 sortedKeys = sorted(data)
 for key in sortedKeys:
-    writeToFile(outFile,data[key])
+    writeToFile(outFile,data[key],subj)
 
 inFile.close()
 outFile.close()
