@@ -48,84 +48,121 @@ for s = 1:length(subjFiles)
     subjDataAll = mergestruct(subjDataAll,subjData.res);  
 end
 subj = 'all';
-
-%%%% PERFORMANCE BY LIST LENGTH
 figs = [];
-figure(1)
-clf
-plotData    = cellfun(@mean,{subjDataAll.errMeanListLength,subjDataAll.reactMeanListLength},'uniformoutput',false);
-plotDataStd = cellfun(@std,{subjDataAll.errMeanListLength,subjDataAll.reactMeanListLength},'uniformoutput',false);
-ns          = cellfun(@length,{subjDataAll.errMeanListLength,subjDataAll.reactMeanListLength},'uniformoutput',false);
-ylabels     = {'Distance Error (VR Units)','Reaction Time (s)'};
-for i = 1:2
-    subplot(1,2,i)
-    bar(plotData{i},'w','linewidth',2)
-    ylabel(ylabels{i},'fontsize',16)
+
+
+
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY LIST LENGTH BAR
+fields      = {'errMeanListLength','normErrMeanListLength','reactMeanListLength','correctMeanListLength'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(m,'w','linewidth',2)
+    ylabel(ylabels{f},'fontsize',16)
     xlabel('List Length','fontsize',16)
     set(gca,'fontsize',16)
     set(gca,'xticklabel',1:3)
     grid on
     hold on
-    errorbar(1:length(plotData{i}),plotData{i},plotDataStd{i}./sqrt(ns{i}-1),'k','linewidth',2,'linestyle','none')
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
 end
-fname = fullfile(figDir,[subj '_listLength']);
-figs.listLength = fname;
-print('-depsc2','-loose',[fname '.eps'])
+%--------------------------------------------------------------------------
 
-%%%% PERFORMANCE BY CONFIDENCE
-figure(2)
-clf
-plotData    = cellfun(@nanmean,{subjDataAll.errMeanConf,subjDataAll.reactMeanConf},'uniformoutput',false);
-plotDataStd = cellfun(@nanstd,{subjDataAll.errMeanConf,subjDataAll.reactMeanConf},'uniformoutput',false);
-f = @(x)sum(~isnan(x));
-ns          = cellfun(f,{subjDataAll.errMeanConf,subjDataAll.reactMeanConf},'uniformoutput',false);
-ylabels     = {'Distance Error (VR Units)','Reaction Time (s)'};
-for i = 1:2
-    subplot(1,2,i)
-    bar(plotData{i},'w','linewidth',2)
-    ylabel(ylabels{i},'fontsize',16)
+
+
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY CONFIDENCE
+fields      = {'errMeanConf','normErrMeanConf','reactMeanConf','correctMeanConf','probConf'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct','Probability of Confidence'};
+colors      = {[0,0.4470, 0.7410],[0.8500, 0.3250, 0.0980],[0.9290,0.6940,0.1250]};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(2)
+    clf    
+    for c = 1:3
+        hold on
+        h=bar(c,m(c),'w','linewidth',2);
+        h.FaceColor = colors{c};
+    end
+    ylabel(ylabels{f},'fontsize',16)
     xlabel('Confidence','fontsize',16)
-    set(gca,'xticklabel',{'Low','High'})
-    set(gca,'fontsize',16)
+    set(gca,'xtick',1:3)
+    set(gca,'xticklabel',{'Pass','Low','High'})
+    set(gca,'fontsize',16)    
     grid on
     hold on
-    errorbar(1:length(plotData{i}),plotData{i},plotDataStd{i}./sqrt(ns{i}-1),'k','linewidth',2,'linestyle','none')
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
 end
-fname = fullfile(figDir,[subj '_conf']);
-figs.conf = fname;
-print('-depsc2','-loose',[fname '.eps'])
+%--------------------------------------------------------------------------
 
-%%%% PERFORMANCE BY TARGET LOCATION (NEAR/FAR)
-figure(3)
-clf
-plotData    = cellfun(@nanmean,{subjDataAll.errMeanTargLoc,subjDataAll.reactMeanTargLoc},'uniformoutput',false);
-plotDataStd = cellfun(@nanstd,{subjDataAll.errMeanTargLoc,subjDataAll.reactMeanTargLoc},'uniformoutput',false);
-f = @(x)sum(~isnan(x));
-ns          = cellfun(f,{subjDataAll.errMeanTargLoc,subjDataAll.reactMeanTargLoc},'uniformoutput',false);
-ylabels     = {'Distance Error (VR Units)','Reaction Time (s)'};
-for i = 1:2
-    subplot(1,2,i)
-    bar(plotData{i},'w','linewidth',2)
-    ylabel(ylabels{i},'fontsize',16)
+
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY TARGET LOCATION (NEAR/FAR)
+fields = {'errTargetLoc','normErrTargetLoc','reactTargetLoc','correctTargetLoc'};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(3)
+    clf    
+    bar(m,'w','linewidth',2)
+    ylabel(ylabels{f},'fontsize',16)
     xlabel('Near/Far Target','fontsize',16)
-    set(gca,'xticklabel',{'Near','Far'})
     set(gca,'fontsize',16)
+    set(gca,'xticklabel',{'Near','Far'})
     grid on
     hold on
-    errorbar(1:length(plotData{i}),plotData{i},plotDataStd{i}./sqrt(ns{i}-1),'k','linewidth',2,'linestyle','none')
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
 end
-fname = fullfile(figDir,[subj '_nearFar']);
-figs.nearFar = fname;
-print('-depsc2','-loose',[fname '.eps'])
+%--------------------------------------------------------------------------
 
-%%% SERIAL POSITION CURVE BY LISTLENGTH
+
+
+%--------------------------------------------------------------------------
+% SERIAL POSITION CURVE BY LISTLENGTH
 errMat    = nanmean(subjDataAll.errMat,3);
 errStdMat = nanstd(subjDataAll.errMat,0,3);
 figure(4)
 clf
-axes('position',[.13 .4 .775 .5]);
 errorbar(repmat(1:size(errStdMat,2),size(errStdMat,1),1)',errMat',errStdMat','linewidth',3)
-h=legend(strcat(cellfun(@num2str,num2cell([1 2 3]),'uniformoutput',false),' item list'));
+h=legend(strcat(cellfun(@num2str,num2cell([1 2 3]),'uniformoutput',false),' item list'),'location','best');
 set(h,'fontsize',20)
 xlabel('','fontsize',16);
 ylabel('Distance Error','fontsize',16);
@@ -133,24 +170,16 @@ grid on
 set(gca,'gridlinestyle',':');
 set(gca,'fontsize',16)
 set(gca,'xtick',1:size(errMat,2))
-
-axes('position',[.13 .1 .775 .2])
-
-meanRemember = mean(subjDataAll.meanRemember);
-bar(meanRemember,'w','linewidth',3)
-set(gca,'xtick',1:size(errMat,2))
-xlabel('Serial Position','fontsize',16);
-ylabel('Percent ','fontsize',16);
-grid on
-set(gca,'gridlinestyle',':');
-set(gca,'fontsize',16)
-
 fname = fullfile(figDir,[subj '_spc']);
 figs.spc = fname;
 print('-depsc2','-loose',[fname '.eps'])
+%--------------------------------------------------------------------------
 
-%%%% DISTANCE ERROR HISTOGRAM
-figure(5)
+
+
+%--------------------------------------------------------------------------
+% DISTANCE ERROR HISTOGRAM
+figure(6)
 clf
 [n,x] = hist(subjDataAll.distErrs,25);
 bar(x,n,1,'w','linewidth',2);
@@ -158,46 +187,89 @@ xlabel('Distance Error','fontsize',16);
 ylabel('Count','fontsize',16);
 set(gca,'fontsize',16)
 grid on
-fname = fullfile(figDir,[subj '_distErr']);
-figs.distErr = fname;
+fname = fullfile(figDir,[subj '_distErrHist']);
+figs.distErrHist = fname;
 print('-depsc2','-loose',[fname '.eps'])
 
+% DISTANCE ERROR HISTOGRAM CONFIDENCE
+chance = 34.7263;
+distMat    = nanmean(subjDataAll.distByConfHist,3);
+edges = 0:5:100;
+binMean = mean([edges(1:end-1)' edges(2:end)'],2);
+figure(7)
+clf
+plot(binMean,distMat','linewidth',3)
+h=legend('Pass','Low Confidence','High Confidence');
+set(h,'fontsize',20)
+xlabel('Distance Error','fontsize',20);
+ylabel('Probability','fontsize',20);
+grid on
+hold on
+ylim = get(gca,'ylim');
+plot([chance chance],ylim,'--k','linewidth',2)
+set(gca,'gridlinestyle',':');
+set(gca,'fontsize',20)
+fname = fullfile(figDir,[subj '_distErrConfHist']);
+print('-depsc2','-loose',[fname '.eps'])
+
+% NORMALIZED DISTANCE ERROR HISTOGRAM CONFIDENCE
+distMat    = nanmean(subjDataAll.normDistByConfHist,3);
+edges = 0:.05:1;
+binMean = mean([edges(1:end-1)' edges(2:end)'],2);
+figure(8)
+clf
+plot(binMean,distMat','linewidth',3)
+h=legend('Pass','Low Confidence','High Confidence');
+set(h,'fontsize',20)
+xlabel('Normalized Distance Error','fontsize',20);
+ylabel('Probability','fontsize',20);
+grid on
+set(gca,'gridlinestyle',':');
+set(gca,'fontsize',20)
+fname = fullfile(figDir,[subj '_normDistErrConfHist']);
+print('-depsc2','-loose',[fname '.eps'])
+%--------------------------------------------------------------------------
+
+
+%--------------------------------------------------------------------------
+
+
 %%%% PERCENT CORRECT AS A FUNCTION OF DISTANCE THRESHOLD
-% figure(6)
-% clf
-% possDists = linspace(0,100,250);
-% pCorr = NaN(1,length(possDists));
-% for i = 1:length(possDists)
-%     pCorr(i) = mean(distErrs < possDists(i));
-% end
-% pCorr = pCorr*100;
-% plot(possDists,pCorr,'linewidth',3)
-% grid on
-% set(gca,'gridlinestyle',':');
-% 
-% hold on
-% x1 = possDists(sum(possDists < 12.5));
-% y1 = pCorr(sum(possDists < 12.5));
-% plot([x1 x1],[0 y1],'-k','linewidth',3);
-% plot([0 x1],[y1 y1],'-k','linewidth',3);
-% 
-% half = sum(pCorr <= 50);
-% x2 = possDists(half);
-% y2 = pCorr(half);
-% plot([x2 x2],[0 y2],':k','linewidth',3);
-% plot([0 x2],[y2 y2],':k','linewidth',3);
-% 
-% xlabel('Correct threshold','fontsize',24)
-% ylabel('Percent within circle','fontsize',24)
-% 
-% titleStr = sprintf('%.2f%% at 12.5, 50%% at %.2f',y1,x2);
-% title(titleStr);
-% set(gca,'TitleFontWeight','normal')
-% set(gca,'fontsize',24)
-% 
-% fname = fullfile(figDir,[subj '_pCorr']);
-% figs.pCorr = fname;
-% print('-depsc2','-loose',[fname '.eps'])
+figure(9)
+clf
+possDists = linspace(0,100,250);
+pCorr = NaN(1,length(possDists));
+for i = 1:length(possDists)
+    pCorr(i) = mean(subjDataAll.distErrs < possDists(i));
+end
+pCorr = pCorr*100;
+plot(possDists,pCorr,'linewidth',3)
+grid on
+set(gca,'gridlinestyle',':');
+
+hold on
+x1 = possDists(sum(possDists < 10));
+y1 = pCorr(sum(possDists < 10));
+plot([x1 x1],[0 y1],'-k','linewidth',3);
+plot([0 x1],[y1 y1],'-k','linewidth',3);
+
+half = sum(pCorr <= 50);
+x2 = possDists(half);
+y2 = pCorr(half);
+plot([x2 x2],[0 y2],':k','linewidth',3);
+plot([0 x2],[y2 y2],':k','linewidth',3);
+
+xlabel('Correct threshold','fontsize',24)
+ylabel('Percent within circle','fontsize',24)
+
+titleStr = sprintf('%.2f%% at 10, 50%% at %.2f',y1,x2);
+title(titleStr);
+set(gca,'TitleFontWeight','normal')
+set(gca,'fontsize',24)
+
+fname = fullfile(figDir,[subj '_pCorr']);
+figs.pCorr = fname;
+print('-depsc2','-loose',[fname '.eps'])
 
 %%%% make report
 texName = 'treasureReport_group.tex';

@@ -22,6 +22,8 @@ outFile = open(os.path.join(dir,"treasureTime.par"), 'w')
 trialNum = 'NaN'
 
 for ind, s in enumerate(inFile.readlines()):
+    
+    s = s.replace('\r','')
     tokens = s[:-1].split('\t')
         
     if ind == 1:
@@ -60,6 +62,8 @@ for ind, s in enumerate(inFile.readlines()):
                 eType = 'rec_item_start'
             elif tokens[3] == 'FEEDBACK_STARTED':                                                                                            
                 eType = 'feedback_start'
+            elif tokens[3] == 'DISTRACTOR_GAME_STARTED':                                                                                            
+                eType = 'distract_start'                
             writeToFile(outFile,mstime,trialNum,eType)
             
         if tokens[3] == 'TREASURE_OPEN':
