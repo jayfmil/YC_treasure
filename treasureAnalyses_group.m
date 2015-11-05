@@ -88,9 +88,9 @@ end
 
 %--------------------------------------------------------------------------
 % PERFORMANCE BY CONFIDENCE
-fields      = {'errMeanConf','normErrMeanConf','reactMeanConf','correctMeanConf','probConf'};
-ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct','Probability of Confidence'};
-colors      = {[0,0.4470, 0.7410],[0.8500, 0.3250, 0.0980],[0.9290,0.6940,0.1250]};
+fields       = {'errMeanConf','normErrMeanConf','reactMeanConf','correctMeanConf','probConf'};
+ylabels      = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct','Probability of Confidence'};
+colors       = {[0,0.4470, 0.7410],[0.8500, 0.3250, 0.0980],[0.9290,0.6940,0.1250]};
 for f = 1:length(fields)
     
     % calculate mean, std, and counts of errors and reaction time    
@@ -115,17 +115,43 @@ for f = 1:length(fields)
     hold on
     errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
             
-    % save to res structure and print figure    
+    % save print figure    
     fname = fullfile(figDir,[subj '_' fields{f}]);    
     figs.(fields{f}) = fname;    
     print('-depsc2','-loose',[fname '.eps'])
+    
+    % also plot as individual subject lines
+    
+    figure(5)
+    clf
+    
+    % get some nice colors
+    X = linspace(0,pi*3,1000);
+    Y = bsxfun(@(x,n)sin(x+2*n*pi/N), X.', 1:N);
+    C = linspecer(N);
+    
+    % change color map
+    c = get(0,'DefaultAxesColorOrder',C)
+    set(0,'DefaultAxesColorOrder',C)
+    h=plot(subjDataAll.(fields{f})','.-','linewidth',3,'markersize',40);
+    [~,order] = sort(subjDataAll.(fields{f})(:,3),'descend');
+    strOrder = strread(num2str(order'),'%s');
+    legend(h(order),strOrder,'location','bestoutside');
+    ylabel(ylabels{f},'fontsize',16)
+    xlabel('Confidence','fontsize',16)
+    set(gca,'xtick',1:3)
+    set(gca,'xticklabel',{'Pass','Low','High'})
+    set(gca,'fontsize',16)    
+    grid on
+    hold on
+    
 end
 %--------------------------------------------------------------------------
 
 
 
 %--------------------------------------------------------------------------
-% PERFORMANCE BY TARGET LOCATION (NEAR/FAR)
+
 fields = {'errTargetLoc','normErrTargetLoc','reactTargetLoc','correctTargetLoc'};
 for f = 1:length(fields)
     
@@ -229,7 +255,7 @@ set(gca,'fontsize',20)
 fname = fullfile(figDir,[subj '_normDistErrConfHist']);
 print('-depsc2','-loose',[fname '.eps'])
 %--------------------------------------------------------------------------
-
+keyboard
 
 %--------------------------------------------------------------------------
 
@@ -283,6 +309,9 @@ unix(['rm ' texName(1:end-3) 'aux']);
 unix(['rm ' texName(1:end-3) 'log']);
 fprintf('Done!\n');
 cd(curr_dir);
+
+
+
 
 % Start making the tex file
 function write_texfile(saveDir,texName, figs)
