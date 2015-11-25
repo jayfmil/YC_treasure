@@ -51,7 +51,13 @@ subj = 'all';
 figs = [];
 
 
-
+%%% 
+%%% Low     0 50
+%%% Med   -50 100
+%%% High -350 200
+gain = repmat([50 100 200],size(subjDataAll.correctMeanConf,1),1);
+loss = repmat([0 -50 -350],size(subjDataAll.correctMeanConf,1),1);
+subjDataAll.expectedVal = subjDataAll.correctMeanConf.*gain + (1-subjDataAll.correctMeanConf).*loss;
 
 %--------------------------------------------------------------------------
 % PERFORMANCE BY LIST LENGTH BAR
@@ -88,8 +94,8 @@ end
 
 %--------------------------------------------------------------------------
 % PERFORMANCE BY CONFIDENCE
-fields       = {'errMeanConf','normErrMeanConf','reactMeanConf','correctMeanConf','probConf'};
-ylabels      = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct','Probability of Confidence'};
+fields       = {'errMeanConf','normErrMeanConf','reactMeanConf','correctMeanConf','probConf','expectedVal'};
+ylabels      = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct','Probability of Confidence','Expected Value'};
 colors       = {[0,0.4470, 0.7410],[0.8500, 0.3250, 0.0980],[0.9290,0.6940,0.1250]};
 for f = 1:length(fields)
     
@@ -126,12 +132,13 @@ for f = 1:length(fields)
     clf
     
     % get some nice colors
-    X = linspace(0,pi*3,1000);
-    Y = bsxfun(@(x,n)sin(x+2*n*pi/N), X.', 1:N);
+    N = size(subjDataAll.(fields{f}),1);
+%     X = linspace(0,pi*3,1000);
+%     Y = bsxfun(@(x,n)sin(x+2*n*pi/N), X.', 1:N);
     C = linspecer(N);
     
     % change color map
-    c = get(0,'DefaultAxesColorOrder',C)
+    c = get(0,'DefaultAxesColorOrder');
     set(0,'DefaultAxesColorOrder',C)
     h=plot(subjDataAll.(fields{f})','.-','linewidth',3,'markersize',40);
     [~,order] = sort(subjDataAll.(fields{f})(:,3),'descend');
@@ -144,6 +151,7 @@ for f = 1:length(fields)
     set(gca,'fontsize',16)    
     grid on
     hold on
+    plot(m,'--k.','linewidth',3,'markersize',30);
     
 end
 %--------------------------------------------------------------------------
