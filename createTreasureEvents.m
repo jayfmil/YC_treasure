@@ -14,21 +14,21 @@ end
 fid = fopen(parfile,'r');
 
 % head has the field names
-header = textscan(fid,'%s',17);
+header = textscan(fid,'%s',21);
 
 % read in the rest and close
-c = textscan(fid,'%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s','delimiter','\t');
+c = textscan(fid,'%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s','delimiter','\t');
 fclose(fid);
 
 % create empty structure
-events = cell2struct(cell(17,1),header{:});
+events = cell2struct(cell(21,1),header{:});
 events(length(c{1})).mstime = [];
 header = header{1};
 
 % fill it in
 for e = 1:length(c{1})
     for f = 1:length(header)
-        if any(strcmp(header{f},{'mstime','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isRecFromNearSide','isSerial','reactionTime','rememberBool','isHighConf'}));
+        if any(strcmp(header{f},{'mstime','trial','block','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','navStartLocationX','navStartLocationY','recStartLocationX','recStartLocationY','isRecFromNearSide','isRecFromStartSide','isSerial','reactionTime','rememberBool','isHighConf'}));
             events(e).(header{f}) = str2double(c{f}{e});
         elseif strcmp(c{f}{e},'None')            
             events(e).(header{f}) = '';

@@ -24,12 +24,30 @@ res  = [];
 figs = [];
 
 %--------------------------------------------------------------------------
+
 % get important behavioral variables from events
 % recall events, used for most analyses
 itemRecEvents = strcmp({events.type},'REC');
 
 % list length: number of chests with items per list
 listLengths = [events(itemRecEvents).listLength];
+
+% trial number
+trialNum = [events(itemRecEvents).trial];
+blockNum = [events(itemRecEvents).block];
+
+% add study test lag to events
+events = addStudyTestLag(events);
+studyTestLag = [events(itemRecEvents).studyTestLag];
+
+% add "correctItem" field to indicate if the response location corresponds
+% the location of the correct item (1), a different item on the list (2),
+% or no item 0)
+events = addCorrectField(events);
+isCorrectItem     = [events(itemRecEvents).correctItem];
+isCorrectItemNo   = [events(itemRecEvents).correctItemNoConf];
+isCorrectItemLow  = [events(itemRecEvents).correctItemLowConf];
+isCorrectItemHigh = [events(itemRecEvents).correctItemHighConf];
 
 % euclidean distance error for each recall
 distErrs    = [events(itemRecEvents).distErr];
@@ -42,6 +60,9 @@ correct = distErrs < 10;
 
 % whether the object location is near or far from test location
 nearFar = ~[events(itemRecEvents).isRecFromNearSide];
+
+% whether the orientation is flipped from nav to test
+sameDiff = ~[events(itemRecEvents).isRecFromStartSide];
 
 % also calculate normalized distance error
 xs          = [events(itemRecEvents).chosenLocationX];
@@ -111,6 +132,118 @@ res.correct    = correct';
 
 %--------------------------------------------------------------------------
 
+
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY TRIAL NUMBER BAR
+
+metrics     = {distErrs,normErrs,reactTimes,correct};
+fields      = {'errMeanTrial','normErrMeanTrial','reactMeanTrial','correctMeanTrial'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for m = 1:length(metrics)
+    
+    % calculate mean, std, and counts of errors and reaction time
+    [errMeanTrial,errStdTrial,nMeanTrial] = grpstats(metrics{m}',trialNum',{'mean','std','numel'});    
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(errMeanTrial,'w','linewidth',2)
+    ylabel(ylabels{m},'fontsize',16)
+    xlabel('Trial Number','fontsize',16)
+    set(gca,'fontsize',16)
+    set(gca,'xtick',1:2:length(unique(trialNum)));
+    t = unique(trialNum);
+    set(gca,'xticklabel',t(1:2:end)+1);
+    grid on
+    hold on
+    errorbar(1:length(errMeanTrial),errMeanTrial,errStdTrial./sqrt(nMeanTrial-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure
+    res.(fields{m}) = errMeanTrial';
+    fname = fullfile(figDir,[subj '_' fields{m}]);
+    figs.(fields{m}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])    
+end
+
+%--------------------------------------------------------------------------
+
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY BLOCK NUMBER BAR
+
+metrics     = {distErrs,normErrs,reactTimes,correct};
+fields      = {'errMeanBlock','normErrMeanBlock','reactMeanBlock','correctMeanBlock'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for m = 1:length(metrics)
+    
+    % calculate mean, std, and counts of errors and reaction time
+    [errMeanBlock,errStdBlock,nMeanBlock] = grpstats(metrics{m}',blockNum',{'mean','std','numel'});    
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(errMeanBlock,'w','linewidth',2)
+    ylabel(ylabels{m},'fontsize',16)
+    xlabel('Block Number','fontsize',16)
+    set(gca,'fontsize',16)
+    set(gca,'xtick',1:2:length(unique(blockNum)));
+    t = unique(blockNum);
+    set(gca,'xticklabel',t);
+    grid on
+    hold on
+    errorbar(1:length(errMeanBlock),errMeanBlock,errStdBlock./sqrt(nMeanBlock-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure
+    res.(fields{m}) = errMeanBlock';
+    fname = fullfile(figDir,[subj '_' fields{m}]);
+    figs.(fields{m}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])    
+end
+
+%--------------------------------------------------------------------------
+
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY STUDY TEST LAG BAR
+
+metrics     = {distErrs,normErrs,reactTimes,correct};
+fields      = {'errMeanLag','normErrMeanLag','reactMeanLag','correctMeanLag'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for m = 1:length(metrics)
+    
+    % calculate mean, std, and counts of errors and reaction time
+    [errMeanLag,errStdLag,nMeanLag] = grpstats(metrics{m}',studyTestLag',{'mean','std','numel'});    
+    
+    % catch instances where not all confidence levels are used and add in NaNs
+    missing = ~ismember(1:6,studyTestLag);
+    if ~all(missing)
+        [errMeanLagTmp,errStdLagTmp,nMeanLagTmp]      = deal(NaN(6,1));        
+        errMeanLagTmp(~missing)   = errMeanLag;errMeanLag=errMeanLagTmp;
+        errStdLagTmp(~missing)    = errStdLag;errStdLag=errStdLagTmp;
+        nMeanLagTmp(~missing)     = nMeanLag;nMeanLag=nMeanLagTmp;
+    end        
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(errMeanLag,'w','linewidth',2)
+    ylabel(ylabels{m},'fontsize',16)
+    xlabel('Lag','fontsize',16)
+    set(gca,'fontsize',16)
+    set(gca,'xtick',1:length(unique(studyTestLag)));
+    t = unique(studyTestLag);
+    set(gca,'xticklabel',t);
+    grid on
+    hold on
+    errorbar(1:length(errMeanLag),errMeanLag,errStdLag./sqrt(nMeanLag-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure
+    res.(fields{m}) = errMeanLag';
+    fname = fullfile(figDir,[subj '_' fields{m}]);
+    figs.(fields{m}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])    
+end
 
 
 %--------------------------------------------------------------------------
@@ -185,6 +318,35 @@ for m = 1:length(metrics)
 end
 %--------------------------------------------------------------------------
 
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY ORIENTATION FLIPPED (SAME/DIRR)
+
+fields = {'errFieldOrient','normFieldOrient','reactFieldOrient','correctFieldOrient'};
+for m = 1:length(metrics)
+    
+    % calculate means, std, and counts
+    [errMeanFieldOrient,errStdFieldOrient,nMeanFieldOrient] = grpstats(metrics{m}',sameDiff',{'mean','std','numel'});
+    
+    % plot it
+    figure(3)
+    clf
+    bar(errMeanFieldOrient,'w','linewidth',2)
+    ylabel(ylabels{m},'fontsize',16)
+    xlabel('Field Orientation','fontsize',16)
+    set(gca,'fontsize',16)
+    set(gca,'xticklabel',{'Same','Different'})
+    grid on
+    hold on
+    errorbar(1:length(errMeanFieldOrient),errMeanFieldOrient,errStdFieldOrient./sqrt(nMeanFieldOrient-1),'k','linewidth',2,'linestyle','none')
+    
+    % save to res structure and print figure
+    res.(fields{m}) = errMeanFieldOrient';
+    fname = fullfile(figDir,[subj '_' fields{m}]);
+    figs.(fields{m}) = fname;
+    print('-depsc2','-loose',[fname '.eps'])
+end
+%--------------------------------------------------------------------------
 
 
 %--------------------------------------------------------------------------
@@ -280,6 +442,34 @@ fname = fullfile(figDir,[subj '_normDistErrConfHist']);
 res.normDistByConfHist = normErrByConf;
 print('-depsc2','-loose',[fname '.eps'])
 %--------------------------------------------------------------------------
+
+confusionPerc = NaN(1,3);
+for i = 1:3
+    confusionPerc(i) = mean(isCorrectItem==i-1);
+end
+confusionPerc = confusionPerc([2 1 3]);
+res.confusionPerc = confusionPerc;
+
+confusionPercNo = NaN(1,3);
+for i = 1:3
+    confusionPercNo(i) = sum(isCorrectItemNo==i-1)/sum(isCorrectItemNo ~= 1 & ~isnan(isCorrectItemNo));%sum(~isnan(isCorrectItemNo));
+end
+confusionPercNo = confusionPercNo([2 1 3]);
+res.confusionPercNo = confusionPercNo;
+
+confusionPercLow = NaN(1,3);
+for i = 1:3
+    confusionPercLow(i) = sum(isCorrectItemLow==i-1)/sum(isCorrectItemLow ~= 1 & ~isnan(isCorrectItemLow));%sum(~isnan(isCorrectItemLow));
+end
+confusionPercLow = confusionPercLow([2 1 3]);
+res.confusionPercLow = confusionPercLow;
+
+confusionPercHigh = NaN(1,3);
+for i = 1:3
+    confusionPercHigh(i) = sum(isCorrectItemHigh==i-1)/sum(isCorrectItemHigh ~= 1 & ~isnan(isCorrectItemHigh));%sum(~isnan(isCorrectItemHigh));
+end
+confusionPercHigh = confusionPercHigh([2 1 3]);
+res.confusionPercHigh = confusionPercHigh;
 
 
 %--------------------------------------------------------------------------
@@ -415,19 +605,84 @@ fprintf(fid,'\\end{document}\n\n\n');
 
 
 
+function events = addStudyTestLag(events)
+
+% add empty field to fill in
+[events.studyTestLag] = deal(NaN);
+
+% loop over each recall event
+recInds = find(strcmp({events.type},'REC'));
+for e = 1:length(recInds)
+    
+    % find corresponding presentation events
+    pres = find(strcmp({events(1:recInds(e)-1).item},events(recInds(e)).item));
+    
+    % compute and add lag to presentation and recall events
+    lag   = recInds(e) - pres;
+    events(pres).studyTestLag = lag;
+    events(recInds(e)).studyTestLag = lag;        
+end
+
+
+
+
+function events = addCorrectField(events)
 
 
 
 
 
 
+% add empty field to fill in
+[events.correctItem] = deal(0);
+[events.correctItemNoConf] = deal(NaN);
+[events.correctItemLowConf] = deal(NaN);
+[events.correctItemHighConf] = deal(NaN);
 
 
-
-
-
-
-
+% loop over each trial
+trials = unique([events.trial]);
+recInds = strcmp({events.type},'REC');
+for t = 1:length(trials)
+    
+    trialInds = [events.trial] == trials(t);
+    trialRec  = find(trialInds & recInds);
+        
+    objectLocs  = [[events(trialRec).locationX]' [events(trialRec).locationY]'];
+    chanceDists = calcChanceForTrial(objectLocs);
+    respLocs = [[events(trialRec).chosenLocationX]' [events(trialRec).chosenLocationY]'];
+    for r = 1:length(trialRec)
+       
+        objLoc = [events(trialRec(r)).locationX events(trialRec(r)).locationY];
+        dists  = pdist([objLoc; respLocs]);
+        
+        confField = 'correctItemHighConf';
+        if ~events(trialRec(r)).rememberBool
+            confField = 'correctItemNoConf';
+        elseif ~events(trialRec(r)).isHighConf
+            confField = 'correctItemLowConf';
+        end
+        
+        thresh = min(chanceDists(setdiff(1:length(trialRec),r)));
+        
+        correctItem = 0;
+        if dists(r) < 10;
+            correctItem = 1;                           
+        elseif any(dists(setdiff(1:length(trialRec),r)) < thresh);
+%             dists(setdiff(1:length(trialRec),r)) < chanceDists(setdiff(1:length(trialRec),r))
+            correctItem = 2;
+        end
+        events(trialRec(r)).correctItem = correctItem;
+        events(trialRec(r)).(confField) = correctItem;
+        
+        % find corresponding presentation events
+        pres = find(strcmp({events(1:trialRec(r)-1).item},events(trialRec(r)).item));        
+        events(pres).correctItem = correctItem;
+        events(pres).(confField) = correctItem;
+        
+    end
+    
+end
 
 
 

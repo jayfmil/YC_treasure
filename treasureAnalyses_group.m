@@ -77,7 +77,7 @@ for f = 1:length(fields)
     ylabel(ylabels{f},'fontsize',16)
     xlabel('List Length','fontsize',16)
     set(gca,'fontsize',16)
-    set(gca,'xticklabel',1:3)
+    set(gca,'xticklabel',2:3)    
     grid on
     hold on
     errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
@@ -90,7 +90,96 @@ end
 %--------------------------------------------------------------------------
 
 
+%--------------------------------------------------------------------------
+% PERFORMANCE BY TRIAL BAR
+fields      = {'errMeanTrial','normErrMeanTrial','reactMeanTrial','correctMeanTrial'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(m,'w','linewidth',2)
+    ylabel(ylabels{f},'fontsize',16)
+    xlabel('Trial','fontsize',16)
+    set(gca,'fontsize',16)
+%     set(gca,'xticklabel',1:3)
+    grid on
+    hold on
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
+end
+%--------------------------------------------------------------------------
 
+
+%--------------------------------------------------------------------------
+% PERFORMANCE BY BLOCK BAR
+fields      = {'errMeanBlock','normErrMeanBlock','reactMeanBlock','correctMeanBlock'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(m,'w','linewidth',2)
+    ylabel(ylabels{f},'fontsize',16)
+    xlabel('Block','fontsize',16)
+    set(gca,'fontsize',16)
+%     set(gca,'xticklabel',1:3)
+    grid on
+    hold on
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
+end
+%--------------------------------------------------------------------------
+
+
+% PERFORMANCE BY LAG BAR
+fields      = {'errMeanLag','normErrMeanLag','reactMeanLag','correctMeanLag'};
+ylabels     = {'Distance Error (VR Units)','Normalized Distance Error','Reaction Time (s)','Prob. Correct'};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(1)
+    clf    
+    bar(m,'w','linewidth',2)
+    ylabel(ylabels{f},'fontsize',16)
+    xlabel('Lag','fontsize',16)
+    set(gca,'fontsize',16)
+%     set(gca,'xticklabel',1:3)
+    grid on
+    hold on
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+            
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
+end
+%--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
 % PERFORMANCE BY CONFIDENCE
@@ -126,15 +215,12 @@ for f = 1:length(fields)
     figs.(fields{f}) = fname;    
     print('-depsc2','-loose',[fname '.eps'])
     
-    % also plot as individual subject lines
-    
+    % also plot as individual subject lines    
     figure(5)
     clf
     
     % get some nice colors
     N = size(subjDataAll.(fields{f}),1);
-%     X = linspace(0,pi*3,1000);
-%     Y = bsxfun(@(x,n)sin(x+2*n*pi/N), X.', 1:N);
     C = linspecer(N);
     
     % change color map
@@ -152,6 +238,11 @@ for f = 1:length(fields)
     grid on
     hold on
     plot(m,'--k.','linewidth',3,'markersize',30);
+    
+    %print figure    
+    fname = fullfile(figDir,[subj 'indiv_lines_' fields{f}]);    
+    figs.([fields{f} '_indiv']) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])
     
 end
 %--------------------------------------------------------------------------
@@ -179,13 +270,47 @@ for f = 1:length(fields)
     grid on
     hold on
     errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
-            
+    [h,p,c,s] = ttest((subjDataAll.(fields{f})(:,1) - subjDataAll.(fields{f})(:,2)));
+    titleStr = sprintf('t(%d) = %.3f, p = %.3f',s.df,s.tstat,p);
+    title(titleStr);
+    
     % save to res structure and print figure    
     fname = fullfile(figDir,[subj '_' fields{f}]);    
     figs.(fields{f}) = fname;    
-    print('-depsc2','-loose',[fname '.eps'])
+    print('-depsc2','-loose',[fname '.eps'])    
 end
 %--------------------------------------------------------------------------
+
+fields = {'errFieldOrient','normFieldOrient','reactFieldOrient','correctFieldOrient'};
+for f = 1:length(fields)
+    
+    % calculate mean, std, and counts of errors and reaction time    
+    m = nanmean(subjDataAll.(fields{f}));
+    s = nanstd(subjDataAll.(fields{f}));
+    n = sum(~isnan(subjDataAll.(fields{f})));
+    
+    % plot it
+    figure(3)
+    clf    
+    bar(m,'w','linewidth',2)
+    ylabel(ylabels{f},'fontsize',16)
+    xlabel('Field Orientation','fontsize',16)
+    set(gca,'fontsize',16)
+    set(gca,'xticklabel',{'Same','Different'})
+    grid on
+    hold on
+    errorbar(1:length(m),m,s./sqrt(n-1),'k','linewidth',2,'linestyle','none')
+    [h,p,c,s] = ttest((subjDataAll.(fields{f})(:,1) - subjDataAll.(fields{f})(:,2)));
+    titleStr = sprintf('t(%d) = %.3f, p = %.3f',s.df,s.tstat,p);
+    title(titleStr);
+    
+    % save to res structure and print figure    
+    fname = fullfile(figDir,[subj '_' fields{f}]);    
+    figs.(fields{f}) = fname;    
+    print('-depsc2','-loose',[fname '.eps'])        
+end
+%--------------------------------------------------------------------------
+
 
 
 
@@ -196,7 +321,7 @@ errStdMat = nanstd(subjDataAll.errMat,0,3);
 figure(4)
 clf
 errorbar(repmat(1:size(errStdMat,2),size(errStdMat,1),1)',errMat',errStdMat','linewidth',3)
-h=legend(strcat(cellfun(@num2str,num2cell([1 2 3]),'uniformoutput',false),' item list'),'location','best');
+h=legend(strcat(cellfun(@num2str,num2cell([2 3]),'uniformoutput',false),' item list'),'location','best');
 set(h,'fontsize',20)
 xlabel('','fontsize',16);
 ylabel('Distance Error','fontsize',16);
@@ -241,9 +366,11 @@ grid on
 hold on
 ylim = get(gca,'ylim');
 plot([chance chance],ylim,'--k','linewidth',2)
+plot([10 10],ylim,'--r','linewidth',2)
 set(gca,'gridlinestyle',':');
 set(gca,'fontsize',20)
 fname = fullfile(figDir,[subj '_distErrConfHist']);
+figs.distErrConfHist = fname;
 print('-depsc2','-loose',[fname '.eps'])
 
 % NORMALIZED DISTANCE ERROR HISTOGRAM CONFIDENCE
@@ -261,9 +388,10 @@ grid on
 set(gca,'gridlinestyle',':');
 set(gca,'fontsize',20)
 fname = fullfile(figDir,[subj '_normDistErrConfHist']);
+figs.normDistErrConfHist = fname;
 print('-depsc2','-loose',[fname '.eps'])
 %--------------------------------------------------------------------------
-keyboard
+
 
 %--------------------------------------------------------------------------
 
@@ -304,7 +432,7 @@ set(gca,'fontsize',24)
 fname = fullfile(figDir,[subj '_pCorr']);
 figs.pCorr = fname;
 print('-depsc2','-loose',[fname '.eps'])
-
+keyboard
 %%%% make report
 texName = 'treasureReport_group.tex';
 write_texfile(saveDir,texName,figs)
@@ -369,30 +497,124 @@ fprintf(fid,'\\usepackage{hyperref}\n');
 fprintf(fid,'\\begin{document}\n\n\n');
 
 % fprintf(fid,'\\hypertarget{%s}{}\n',region{1});
+s = 1;
 
-% This section writes the figures
-for s = 1:length(figs)
+% error by list length
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errMeanListLength);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrMeanListLength);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactMeanListLength);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctMeanListLength);
+fprintf(fid,'\\caption{\\textbf{Performance by list length}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
     
-    fprintf(fid,'\\begin{figure}\n');
-    fprintf(fid,'\\centering\n');    
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).listLength);
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).conf);
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).nearFar);
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).distErr);    
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).spc);        
-%     fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).pCorr);        
-    fprintf(fid,'\\caption{a: Performance as a factor of number of objects. b: Performance as a factor of confidence. c: Performance as a factor of item near/far from test side. d: distance error histogram. e: serial position curve.}\n');
-    fprintf(fid,'\\end{figure}\n\n\n');
-    if mod(s,2) == 0
-        fprintf(fid,'\\clearpage\n\n\n');
-    end
-end
+
+% error by trial
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errMeanTrial);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrMeanTrial);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactMeanTrial);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctMeanTrial);
+fprintf(fid,'\\caption{\\textbf{Performance by trial number}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% error by block
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errMeanBlock);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrMeanBlock);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactMeanBlock);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctMeanBlock);
+fprintf(fid,'\\caption{\\textbf{Performance by block}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% error by lag
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errMeanLag);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrMeanLag);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactMeanLag);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctMeanLag);
+fprintf(fid,'\\caption{\\textbf{Performance by study test lag}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% error by confidence
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errMeanConf);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrMeanConf);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactMeanConf);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctMeanConf);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).probConf);
+fprintf(fid,'\\caption{\\textbf{Performance confidence choice (a-d). e: Probability of confidence.}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% error by confidence lines
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errMeanConf_indiv);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrMeanConf_indiv);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactMeanConf_indiv);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctMeanConf_indiv);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).probConf_indiv);
+fprintf(fid,'\\caption{\\textbf{Performance confidence choice with individual subject lines (a-d). e: Probability of confidence.}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% expected val
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).expectedVal);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).expectedVal_indiv);
+fprintf(fid,'\\caption{\\textbf{Expected value by confidence}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% error by target locatiom
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errTargetLoc);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normErrTargetLoc);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactTargetLoc);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctTargetLoc);
+fprintf(fid,'\\caption{\\textbf{Performance by target location (near side vs far side)}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+% error by target locatiom
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).errFieldOrient);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normFieldOrient);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).reactFieldOrient);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).correctFieldOrient);
+fprintf(fid,'\\caption{\\textbf{Performance by test orientation (flipped vs same as navigation)}}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+
+% other
+fprintf(fid,'\\begin{figure}\n');
+fprintf(fid,'\\centering\n');
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).spc);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).distErrHist);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).distErrConfHist);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).normDistErrConfHist);
+fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).pCorr);
+fprintf(fid,'\\caption{a: Serial position curve. b: All distance errors histocgram. c: Distance error probability by confidence. d: Normalized distance error probability by confidence. e: Percent correct by threshold.}\n');
+fprintf(fid,'\\end{figure}\n\n\n');
+fprintf(fid,'\\clearpage\n\n\n');
+
+
 
 fprintf(fid,'\\end{document}\n\n\n');
-
-
-
-
 
 
 

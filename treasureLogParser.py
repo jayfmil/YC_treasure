@@ -3,7 +3,7 @@ import os.path
 import pprint
 
 def writeToFile(f,data,subj):
-    columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
+    columnOrder = ['mstime','type','item','trial','block','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','navStartLocationX','navStartLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isRecFromStartSide','isSerial','reactionTime','rememberBool'];
     strToWrite = ''
     for col in columnOrder:
         line = data[col]
@@ -14,9 +14,9 @@ def writeToFile(f,data,subj):
     f.write(strToWrite)
 
 
-def makeEmptyDict(mstime=None,eventType=None,item=None,trial=None,chestNum=None,locationX=None,locationY=None,chosenLocationX=None,chosenLocationY=None,recStartLocationX=None,recStartLocationY=None,isHighConf=None,isRecFromNearSide=None,isSerial=None,reactionTime=None,rememberBool=None):
-    fields = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
-    vals = [mstime,eventType,item,trial,chestNum,locationX,locationY,chosenLocationX,chosenLocationY,recStartLocationX,recStartLocationY,isHighConf,isRecFromNearSide,isSerial,reactionTime,rememberBool]
+def makeEmptyDict(mstime=None,eventType=None,item=None,trial=None,block=None,chestNum=None,locationX=None,locationY=None,chosenLocationX=None,chosenLocationY=None,navStartLocationX=None,navStartLocationY=None,recStartLocationX=None,recStartLocationY=None,isHighConf=None,isRecFromNearSide=None,isRecFromStartSide=None,isSerial=None,reactionTime=None,rememberBool=None):
+    fields = ['mstime','type','item','trial','block','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','navStartLocationX','navStartLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isRecFromStartSide','isSerial','reactionTime','rememberBool'];
+    vals = [mstime,eventType,item,trial,block,chestNum,locationX,locationY,chosenLocationX,chosenLocationY,navStartLocationX,navStartLocationY,recStartLocationX,recStartLocationY,isHighConf,isRecFromNearSide,isRecFromStartSide,isSerial,reactionTime,rememberBool]
     emptyDict = dict(zip(fields,vals))
     return emptyDict
     
@@ -37,7 +37,7 @@ if logFile == '':
 inFile = open(os.path.join(dir,logFile), 'r')
 subj = logFile[:-4]
 outFile = open(os.path.join(dir,"treasure.par"), 'w')
-columnOrder = ['mstime','type','item','trial','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isSerial','reactionTime','rememberBool'];
+columnOrder = ['mstime','type','item','trial','block','chestNum','locationX','locationY','chosenLocationX','chosenLocationY','navStartLocationX','navStartLocationY','recStartLocationX','recStartLocationY','isHighConf','isRecFromNearSide','isRecFromStartSide','isSerial','reactionTime','rememberBool'];
 outFile.write('\t'.join(columnOrder) + '\tsubj\n')
 
 
@@ -45,6 +45,7 @@ treasureInfo = {}
 data = {}
 phase = None
 env_center = None
+block = 0
 pp = pprint.PrettyPrinter(indent=4)
 
 for s in inFile.readlines():
@@ -80,6 +81,8 @@ for s in inFile.readlines():
                 phase = 'nav'
                 serialPos = 0
                 item = ''
+                navStartX = playerPosition[0]
+                navStartY = playerPosition[2]                
             elif tokens[3] == 'RECALL_PHASE_STARTED':
                 phase = 'rec'
                 recPos = 0   
@@ -100,7 +103,7 @@ for s in inFile.readlines():
                     isItemPres = 1
                 else:
                     isItemPres = 0
-                    data[mstime] = makeEmptyDict(mstime,'CHEST',None,trialNum,serialPos,presX,presY) 
+                    data[mstime] = makeEmptyDict(mstime,'CHEST',None,trialNum,block,serialPos,presX,presY,None,None,navStartX,navStartY) 
             
             elif tokens[3] == 'TREASURE_LABEL':
                 item = tokens[4]
@@ -109,7 +112,7 @@ for s in inFile.readlines():
             
             elif tokens[2] == item and tokens[3] == 'SPAWNED':
                 mstime = tokens[0]
-                data[mstime] = makeEmptyDict(mstime,'CHEST',item,trialNum,serialPos,presX,presY) 
+                data[mstime] = makeEmptyDict(mstime,'CHEST',item,trialNum,block,serialPos,presX,presY,None,None,navStartX,navStartY) 
         
         ### RECALL INFO ###
         elif phase == 'rec':
@@ -127,15 +130,26 @@ for s in inFile.readlines():
                 
                 key = getPresDictKey(data,recItem,trialNum)
                 data[key]['recStartLocationX'] = playerPosition[0]
-                data[key]['recStartLocationY'] = playerPosition[2]        
+                data[key]['recStartLocationY'] = playerPosition[2]   
+                presX = data[key]['locationX']
+                presY = data[key]['locationY']                
+                # pp.pprint(data[key])   
+
+                # determine if navigation and recall started from the same side
+                isRecFromStartSide = 0          
+                if ((float(navStartY) >= float(env_center[1]) and float(data[key]['recStartLocationY']) >= float(env_center[1])) or
+                    (float(navStartY) < float(env_center[1]) and float(data[key]['recStartLocationY']) < float(env_center[1]))):
+                    isRecFromStartSide = 1
+                data[key]['isRecFromStartSide'] = isRecFromStartSide      
+                
                 # determine if the target location is the same half of the environment
                 # as the player test location
-                isRecFromNearSide = 0
-                if ((presY >= env_center[1] and data[key]['recStartLocationY'] >= env_center[1]) or
-                    (presY < env_center[1] and data[key]['recStartLocationY'] < env_center[1])):
-                    isRecFromNearSide = 1
+                isRecFromNearSide = 0                   
+                if ((float(presY) >= float(env_center[1]) and float(data[key]['recStartLocationY']) >= float(env_center[1])) or
+                    (float(presY) < float(env_center[1]) and float(data[key]['recStartLocationY']) < float(env_center[1]))):
+                    isRecFromNearSide = 1                 
                 data[key]['isRecFromNearSide'] = isRecFromNearSide                        
-                
+
             elif tokens[2] == recItem and tokens[3] == 'SPAWNED':
                 mstime = tokens[0]                
                 
@@ -164,7 +178,7 @@ for s in inFile.readlines():
                 presX = tokens[4]
                 presY = tokens[6]                
                 
-                data[mstime] = makeEmptyDict(mstime,'REC',recItem,trialNum,'NaN',presX,presY,x,y,playerPosition[0],playerPosition[2],reactionTime=reactionTime,rememberBool=rememberBool) 
+                data[mstime] = makeEmptyDict(mstime,'REC',recItem,trialNum,block,'NaN',presX,presY,x,y,navStartX,navStartY,playerPosition[0],playerPosition[2],reactionTime=reactionTime,rememberBool=rememberBool) 
 
                 # fill in the presentaiton event with recall info
                 # there is probably/definitely a more efficient way to do this
@@ -175,8 +189,11 @@ for s in inFile.readlines():
                 data[key]['rememberBool'] = rememberBool                                               
                 data[mstime]['chestNum'] = data[key]['chestNum']                                
                 data[mstime]['isRecFromNearSide'] = isRecFromNearSide
-                        
-                                                
+                data[mstime]['isRecFromStartSide'] = isRecFromStartSide     
+                
+            elif tokens[2] == 'Completed Block UI' and tokens[4] == 'True':
+                block += 1
+                                                                                    
                     
 sortedKeys = sorted(data)
 for key in sortedKeys:
