@@ -1,19 +1,68 @@
-function events = createTreasureEvents(parfile,sessNum,saveDir)
+function [events,sessionScore] = createTreasureEvents(subject,sessionDir,sessNum,saveDir)
 % function events = createTreasureEvents(parfile)
 %
 % Create events struture for the treasure game.
 %
-% Input: path to parfile created with parser.py
-%        path to directory to save events file
+% Input: 
+%        subject: subject code (eg, 'R1124J')
+%     sessionDir: path to session direction (eg., /data10/RAM/subjects/R1124J/behavioral/TH1/session_0)
+%     sessionNum: session number (eg, 0)
+%        saveDir: directory to save events.mat and score.mat
+
+if ~exist('subject','var') || isempty(subject)
+    fprintf('ERROR. PLEASE INPUT subject\n')
+    return
+end
 
 if ~exist('sessNum','var') || isempty(sessNum)
-    fprintf('ERROR. PLEASE INPUT SESSION NUMBER\n')
+    fprintf('ERROR. PLEASE INPUT sessionNum\n')
+    return
+end
+
+if ~exist('sessionDir','var') || isempty(sessionDir)
+    fprintf('ERROR. PLEASE INPUT sessionDir\n')
+    return
+end
+
+if ~exist('saveDir','var') || isempty(saveDir)
+    fprintf('ERROR. PLEASE INPUT saveDir\n')
     return
 end
 
 if ~exist(saveDir,'dir')
     mkdir(saveDir);
 end
+
+% create parfile if needed
+cwd = pwd;
+parfile = fullfile(sessionDir,'treasure.par');
+if ~exist(parfile,'file')
+  fprintf('%s does not exist. Creating.',parfile)
+  par_python_func = which('treasureLogParser.py');   
+  cd(sessionDir);
+  [s,r] = system(['python ',par_python_func,' ',subject,'Log.txt']);
+  if ~exist(parfile,'file')
+    fprintf('%s could not be created.',parfile)
+    return
+  else
+    fprintf(' Done.\n')
+  end
+end
+cd(cwd);
+
+% create eeg.eeglog.up if needed
+beh_syncfile = fullfile(sessionDir,'eeg.eeglog.up');
+if ~exist(beh_syncfile,'file')
+  unitySyncs = fullfile(sessionDir,[subject,'EEGLog.txt']);
+  if exist(unitySyncs,'file')
+    fprintf('Creating eeg.eeglog.up from %s.\n',unitySyncs)
+    cd(sessionDir);
+    [s,r] = system(sprintf('grep "ON" %s > eeg.eeglog.up',unitySyncs));    
+  else
+    error(sprintf('neither %s or %s exist\n',beh_syncfile, unitySyncs))
+  end
+end
+cd(cwd);
 
 % open parfile
 fid = fopen(parfile,'r');
@@ -117,10 +166,19 @@ eStart.subj = events(1).subj;
 eStart.session = events(1).session;
 eStart.radius_size = events(1).radius_size;
 events = [eStart events];
+[events.subj] = deal(subject);
 
 % save to file
-fname = fullfile(saveDir,[events(1).subj '_events.mat']);
+fname = fullfile(saveDir,'events.mat');
 save(fname,'events');
+
+% finally, create scores.mat to hold the score for the session
+fid = fopen(fullfile(sessionDir,'totalScore.txt'));
+c = textscan(fid,'%s');
+fclose(fid);
+sessionScore = str2num(c{1}{1});
+fname = fullfile(saveDir,'score.mat');
+save(fname,'sessionScore');
 
 
 
