@@ -1,4 +1,4 @@
-function [events,sessionScore] = createTreasureEvents(subject,sessionDir,sessNum,saveDir)
+function [events,score] = createTreasureEvents(subject,sessionDir,sessNum,saveDir)
 % function events = createTreasureEvents(parfile)
 %
 % Create events struture for the treasure game.
@@ -177,8 +177,12 @@ fid = fopen(fullfile(sessionDir,'totalScore.txt'));
 c = textscan(fid,'%s');
 fclose(fid);
 sessionScore = str2num(c{1}{1});
+score = [];
+score.sessionScore = sessionScore;
+score.subj = subject;
+score.session = sessNum;
 fname = fullfile(saveDir,'score.mat');
-save(fname,'sessionScore');
+save(fname,'score');
 
 
 
