@@ -1,4 +1,4 @@
-function treasureAnalyses(events,saveDir)
+function [res,figs] = treasureAnalyses(events,saveDir)
 % function treasureAnalyses(events,saveDir)
 %
 % Inputs:  events - treasure game events structure for a single session
@@ -6,6 +6,7 @@ function treasureAnalyses(events,saveDir)
 %
 % This function saves a file <sessionname>_res.mat in saveDir. This
 % function also creates a report <sessionname>_treasureReport.pdf
+
 
 % location to save average data
 if ~exist(saveDir,'dir')
@@ -56,7 +57,7 @@ distErrs    = [events(itemRecEvents).distErr];
 reactTimes  = [events(itemRecEvents).reactionTime]/1000;
 
 % correct/incorrect bool
-correct = distErrs < 10;
+correct = [events(itemRecEvents).recalled];
 
 % whether the object location is near or far from test location
 nearFar = ~[events(itemRecEvents).isRecFromNearSide];
@@ -514,97 +515,6 @@ fname = fullfile(saveDir,[events(1).subj '_res.mat']);
 save(fname,'res')
 
 
-%%%% make report
-% texName = 'treasureReport.tex';
-% write_texfile(saveDir,texName,figs)
-% 
-% curr_dir = pwd;
-% cd(saveDir);
-% fprintf('Compiling pdf...\n');
-% unix(['pdflatex -shell-escape ' fullfile(saveDir, texName)]);
-% unix(['rm ' texName(1:end-3) 'aux']);
-% unix(['rm ' texName(1:end-3) 'log']);
-% fprintf('Done!\n');
-% cd(curr_dir);
-
-% Start making the tex file
-function write_texfile(saveDir,texName, figs)
-
-% Write the document. If you do not have write permission, this will crash.
-fid = fopen(fullfile(saveDir,texName),'w');
-
-if fid==-1;
-    error(sprintf('cannot open %s',texName))
-end
-
-% Write out the preamble to the tex doc. This is standard stuff and doesn't
-% need to be changed
-fprintf(fid,'\\documentclass[a4paper]{article} \n');
-fprintf(fid,'\\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}\n');
-fprintf(fid,'\\usepackage{graphicx,multirow} \n');
-fprintf(fid,'\\usepackage{epstopdf} \n');
-fprintf(fid,'\\usepackage[small,bf,it]{caption}\n');
-fprintf(fid,'\\usepackage{subfigure,amsmath} \n');
-% fprintf(fid,'\\usepackage{wrapfig} \n');
-% fprintf(fid,'\\usepackage{longtable} \n');
-% fprintf(fid,'\\usepackage{pdfpages}\n');
-% fprintf(fid,'\\usepackage{mathtools}\n');
-% fprintf(fid,'\\usepackage{array}\n');
-% fprintf(fid,'\\usepackage{enumitem}\n');
-% fprintf(fid,'\\usepackage{sidecap} \\usepackage{soul}\n');
-
-% fprintf(fid,'\\setlength\\belowcaptionskip{5pt}\n');
-fprintf(fid,'\n');
-fprintf(fid,'\\addtolength{\\oddsidemargin}{-.875in} \n');
-fprintf(fid,'\\addtolength{\\evensidemargin}{-.875in} \n');
-fprintf(fid,'\\addtolength{\\textwidth}{1.75in} \n');
-fprintf(fid,'\\addtolength{\\topmargin}{-.75in} \n');
-fprintf(fid,'\\addtolength{\\textheight}{1.75in} \n');
-fprintf(fid,'\n');
-fprintf(fid,'\\newcolumntype{C}[1]{>{\\centering\\let\\newline\\\\\\arraybackslash\\hspace{0pt}}m{#1}} \n');
-
-fprintf(fid,'\\usepackage{fancyhdr}\n');
-fprintf(fid,'\\pagestyle{fancy}\n');
-fprintf(fid,'\\fancyhf{}\n');
-% fprintf(fid,'\\lhead{Report: %s }\n',strrep(subj,'_','\_'));
-fprintf(fid,'\\rhead{Date created: %s}\n',date);
-
-fprintf(fid,'\\usepackage{hyperref}\n');
-
-% Start the document
-fprintf(fid,'\\begin{document}\n\n\n');
-
-% fprintf(fid,'\\hypertarget{%s}{}\n',region{1});
-
-% This section writes the figures
-for s = 1:length(figs)
-    
-    fprintf(fid,'\\begin{figure}\n');
-    fprintf(fid,'\\centering\n');    
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).listLength);
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).conf);
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).nearFar);
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).distErr);    
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).spc);        
-    fprintf(fid,'\\subfigure[]{{\\includegraphics[width=0.49\\textwidth]{%s}}}\n',figs(s).pCorr);        
-    fprintf(fid,'\\caption{a: Performance as a factor of number of objects. b: Performance as a factor of confidence. c: Performance as a factor of item near/far from test side. d: distance error histogram. e: serial position curve. f: Percent correct by threshold.}\n');
-    fprintf(fid,'\\end{figure}\n\n\n');
-    if mod(s,2) == 0
-        fprintf(fid,'\\clearpage\n\n\n');
-    end
-end
-
-fprintf(fid,'\\end{document}\n\n\n');
-
-
-
-
-
-
-
-
-
-
 function events = addStudyTestLag(events)
 
 % add empty field to fill in
@@ -627,11 +537,6 @@ end
 
 
 function events = addCorrectField(events)
-
-
-
-
-
 
 % add empty field to fill in
 [events.correctItem] = deal(0);

@@ -41,11 +41,16 @@ columnOrder = ['mstime','type','item','trial','block','chestNum','locationX','lo
 outFile.write('\t'.join(columnOrder) + '\tsubj\n')
 
 
+
+
 treasureInfo = {}
 data = {}
 phase = None
 env_center = None
 block = 0
+radius = None
+startMS = None
+totalScore = 0;
 pp = pprint.PrettyPrinter(indent=4)
 
 for s in inFile.readlines():
@@ -54,12 +59,18 @@ for s in inFile.readlines():
     tokens = s[:-1].split('\t')
     if len(tokens)>1:            
         
-        # remove spaces
-        # change practice trial numbers
-        
+        if tokens[2] == 'EnvironmentPositionSelector' and tokens[4] == 'DIAMETER' and startMS is None:            
+            startMS = tokens[0]
+            radius = float(tokens[5])/2.0
+            outFile.write('SESSION_START\t%s\n'%(startMS))
+            outFile.write('RADIUS\t%s\n'%(radius))
+            
+        elif tokens[2] == 'Total Score' and tokens[3] == 'TEXT_MESH':
+            totalScore += int(tokens[4])
+            
         # THE BEGINNING OF A TRIAL
-        if tokens[2] == 'Trial Info': 
-            trialNum = tokens[4]
+        elif tokens[2] == 'Trial Info': 
+            trialNum = tokens[4]            
             
         # keep a dictionary of treasure chest locations
         if 'TreasureChest' in tokens[2] and tokens[3] == 'POSITION':
@@ -201,3 +212,7 @@ for key in sortedKeys:
 
 inFile.close()
 outFile.close()
+
+scoreFile = open(os.path.join(dir,"totalScore.txt"), 'w')
+scoreFile.write('%d'%(totalScore))
+scoreFile.close()
