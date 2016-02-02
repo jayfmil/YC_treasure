@@ -51,14 +51,17 @@ end
 % get the directories
 evFile         = fullfile(expDir,'events.mat');
 scoreFile      = fullfile(expDir,'score.mat');
+timingFile     = fullfile(expDir,'timing.mat');
 
 % load the events
-ev        = loadEvents_local(evFile,session); 
-score     = loadEvents_local(scoreFile,session);
+ev        = loadEvents_local(evFile,session,'events'); 
+score     = loadEvents_local(scoreFile,session,'score');
+timing    = loadEvents_local(timingFile,session,'timing');
 
 % load the events in the events database
 [ev_db,doCat_ev] = loadEventsDB_local(eventsDir,subject,session,'events'); 
 [score_db,doCat_score_db] = loadEventsDB_local(eventsDir,subject,session,'score');
+[timing_db,doCat_timing_db] = loadEventsDB_local(eventsDir,subject,session,'timing');
 
 % save the concatenated events
 fprintf('\n\n')
@@ -84,7 +87,20 @@ if ~isempty(score)&&~isempty(score_db)
 elseif ~isempty(score)&&isempty(score_db)&&doCat_score_db
   fprintf('no database events found for this subject...\ncreating new events struct in database from the current session\n');
   score_ev_new = score;
-  saveEventsDB_local(eventsDir,subject,'score',binned_ev_new);
+  saveEventsDB_local(eventsDir,subject,'score',score_ev_new);
+else
+  fprintf('not adding session\n')
+end
+
+fprintf('timing events: ')
+if ~isempty(timing)&&~isempty(timing_db)
+  fprintf('adding new session\n')
+  timing_ev_new = [timing_db timing];
+  saveEventsDB_local(eventsDir,subject,'timing',timing_ev_new);
+elseif ~isempty(timing)&&isempty(timing_db)&&doCat_timing_db
+  fprintf('no database events found for this subject...\ncreating new events struct in database from the current session\n');
+  timing_ev_new = timing;
+  saveEventsDB_local(eventsDir,subject,'timing',timing_ev_new);
 else
   fprintf('not adding session\n')
 end
@@ -124,7 +140,7 @@ function [ev,doCat] = loadEventsDB_local(eDir,subj,sess,evStr);
   end
     
 %-----------------------------------------------
-function ev = loadEvents_local(evFil,sessNum)
+function ev = loadEvents_local(evFil,sessNum,field)
   [~,thisFile] = fileparts(evFil);
   if ~exist(evFil,'file')
     fprintf('%s does not exist\n',thisFile)
@@ -134,7 +150,7 @@ function ev = loadEvents_local(evFil,sessNum)
   
   % load the events
   ev_tmp = load(evFil);
-  ev     = ev_tmp.events;
+  ev     = ev_tmp.(field);
   
   % check to make sure that the events have the session that you
   % think that thet have

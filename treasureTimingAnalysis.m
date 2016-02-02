@@ -58,46 +58,46 @@ timePerInstTrial = grpstats(timePerInst,trialsInst,{'sum'});
 
 % ydata is navigation time, recall time, and total time
 y = [timePerNav timePerDistract timePerRec timePerTrial - (timePerRec+timePerNav+timePerDistract)]/1000;
-y = [y;mean(y)];
-
-% plot the bars and make them look nice
-clf
-x = [1:size(y,1)-1 size(y,1)+1];
-h=bar(x,y,'stacked');
-h(1).FaceColor = [12 44 82]/255;
-h(1).EdgeColor = [12 44 82]/255;
-h(2).FaceColor = [95 107 97]/255;
-h(2).EdgeColor = [95 107 97]/255;
-h(3).FaceColor = [94 157 200]/255;
-h(3).EdgeColor = [94 157 200]/255;
-h(4).FaceColor = [220 240 247]/255;
-h(4).EdgeColor = [220 240 247]/255;
-set(gca,'xtick',x);
-
-% label by the number of objects per trial
-objsForEachTrial = grpstats(objInds,trials,{'sum'});
-objsForEachTrial = [objsForEachTrial; mean(objsForEachTrial)];
-
-% figure settings
-f = gca;
-xtick = f.XTick;
-set(gca,'xticklabel',objsForEachTrial);
-set(gca,'xlim',[0 xtick(end)+1])
-ylabel('Time (s)')
-xlabel('# Objects/Trial')
-set(gca,'fontsize',18)
-hold on
-ylim = f.YLim;
-plot([xtick(end)-1 xtick(end)-1],ylim,'--k','linewidth',3)
-c = {'Navigation','Distract','Recall','Other'};
-h2=legend(h([4 3 2 1]),c{[4 3 2 1]}) ;
-h2.Location = 'EastOutside';
-
-% title with the time per objects
+% y = [y;mean(y)];
 objTime = totalTime/sum(objInds)/1000;
-titleStr = sprintf('%.3f s/object',objTime);
-title(titleStr);
 
+% % plot the bars and make them look nice
+% clf
+% x = [1:size(y,1)-1 size(y,1)+1];
+% h=bar(x,y,'stacked');
+% h(1).FaceColor = [12 44 82]/255;
+% h(1).EdgeColor = [12 44 82]/255;
+% h(2).FaceColor = [95 107 97]/255;
+% h(2).EdgeColor = [95 107 97]/255;
+% h(3).FaceColor = [94 157 200]/255;
+% h(3).EdgeColor = [94 157 200]/255;
+% h(4).FaceColor = [220 240 247]/255;
+% h(4).EdgeColor = [220 240 247]/255;
+% set(gca,'xtick',x);
+% 
+% % label by the number of objects per trial
+% objsForEachTrial = grpstats(objInds,trials,{'sum'});
+% objsForEachTrial = [objsForEachTrial; mean(objsForEachTrial)];
+% 
+% % figure settings
+% f = gca;
+% xtick = f.XTick;
+% set(gca,'xticklabel',objsForEachTrial);
+% set(gca,'xlim',[0 xtick(end)+1])
+% ylabel('Time (s)')
+% xlabel('# Objects/Trial')
+% set(gca,'fontsize',18)
+% hold on
+% ylim = f.YLim;
+% plot([xtick(end)-1 xtick(end)-1],ylim,'--k','linewidth',3)
+% c = {'Navigation','Distract','Recall','Other'};
+% h2=legend(h([4 3 2 1]),c{[4 3 2 1]}) ;
+% h2.Location = 'EastOutside';
+% 
+% % title with the time per objects
+% titleStr = sprintf('%.3f s/object',objTime);
+% title(titleStr);
+% 
 
 
 

@@ -50,6 +50,24 @@ if ~exist(parfile,'file')
 end
 cd(cwd);
 
+% create timing parfile if needed
+cwd = pwd;
+parfileTiming = fullfile(sessionDir,'treasureTime.par');
+if ~exist(parfileTiming,'file')
+  fprintf('%s does not exist. Creating.',parfileTiming)
+  par_python_func = which('treasureLogParser_timingInfo.py');   
+  cd(sessionDir);
+  [s,r] = system(['python ',par_python_func,' ',subject,'Log.txt']);
+  if ~exist(parfileTiming,'file')
+    fprintf('%s could not be created.',parfileTiming)    
+    return
+  else
+    fprintf(' Done.\n')
+  end
+end
+[timingInfo,timePerObj] = treasureTimingAnalysis(parfileTiming);
+cd(cwd);
+
 % create eeg.eeglog.up if needed
 beh_syncfile = fullfile(sessionDir,'eeg.eeglog.up');
 if ~exist(beh_syncfile,'file')
@@ -57,9 +75,11 @@ if ~exist(beh_syncfile,'file')
   if exist(unitySyncs,'file')
     fprintf('Creating eeg.eeglog.up from %s.\n',unitySyncs)
     cd(sessionDir);
-    [s,r] = system(sprintf('grep "ON" %s > eeg.eeglog.up',unitySyncs));    
-  else
-    error(sprintf('neither %s or %s exist\n',beh_syncfile, unitySyncs))
+    [s,r] = system(sprintf('grep "ON" %s > eeg.eeglog.up',unitySyncs)); 
+  elseif ~exist(unitySyncs,'file')
+      fprintf('WARNING: behavioral sync pulse files does not exist\n')
+  %else
+  %  error(sprintf('neither %s or %s exist\n',beh_syncfile, unitySyncs))
   end
 end
 cd(cwd);
@@ -172,7 +192,7 @@ events = [eStart events];
 fname = fullfile(saveDir,'events.mat');
 save(fname,'events');
 
-% finally, create scores.mat to hold the score for the session
+% create scores.mat to hold the score for the session
 fid = fopen(fullfile(sessionDir,'totalScore.txt'));
 c = textscan(fid,'%s');
 fclose(fid);
@@ -183,6 +203,15 @@ score.subj = subject;
 score.session = sessNum;
 fname = fullfile(saveDir,'score.mat');
 save(fname,'score');
+
+% create timing.mat to hold the timing info for the session
+timing = [];
+timing.trialInfo = timingInfo;
+timing.timePerObj = timePerObj;
+timing.subj = subject;
+timing.session = sessNum;
+fname = fullfile(saveDir,'timing.mat');
+save(fname,'timing');
 
 
 
